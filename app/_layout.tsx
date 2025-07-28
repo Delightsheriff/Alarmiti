@@ -22,5 +22,10 @@ export default function RootLayout() {
     return null;
   }
 
-  return <Stack />;
+  return (
+    <>
+      {/* <StatusBar hidden={true} /> */}
+      <Stack screenOptions={{ headerShown: false }} />
+    </>
+  );
 }

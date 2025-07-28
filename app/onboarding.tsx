@@ -1,0 +1,107 @@
+import { onboardingScreens } from "@/constants/onboardingData";
+import React, { useEffect, useRef, useState } from "react";
+import { Image, Text, TouchableOpacity, View } from "react-native";
+import PagerView from "react-native-pager-view";
+
+const Onboarding = () => {
+  const pagerRef = useRef<PagerView>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [autoSliding, setAutoSliding] = useState(true);
+  const isLast = currentIndex === onboardingScreens.length - 1;
+
+  // Auto slide logic
+  useEffect(() => {
+    if (!autoSliding) return;
+
+    const timer = setInterval(() => {
+      if (!isLast) {
+        const next = currentIndex + 1;
+        pagerRef.current?.setPage(next);
+      }
+    }, 4000);
+
+    return () => clearInterval(timer);
+  }, [currentIndex, autoSliding]);
+
+  const handlePageChange = (e: any) => {
+    const newIndex = e.nativeEvent.position;
+    if (newIndex !== currentIndex) {
+      setAutoSliding(false); // stop auto sliding on manual swipe
+      setCurrentIndex(newIndex);
+    }
+  };
+
+  const handleSkip = () => {
+    // TODO: navigate to app main screen
+  };
+
+  return (
+    <View className="flex-1">
+      <PagerView
+        ref={pagerRef}
+        style={{ flex: 1 }}
+        initialPage={0}
+        onPageSelected={handlePageChange}
+      >
+        {onboardingScreens.map((screen, index) => (
+          <View key={index} className="flex-1">
+            {/* Top image */}
+            <View className="flex-[0.4]">
+              <Image
+                source={screen.image}
+                className="w-full h-full"
+                resizeMode="contain"
+              />
+            </View>
+
+            {/* Bottom */}
+            <View className="flex-[0.6] bg-gray-900 px-8 pt-12 justify-between">
+              <View>
+                <Text className="text-white text-3xl font-bold font-manrope text-center mb-8 leading-tight">
+                  {screen.title}
+                </Text>
+              </View>
+
+              <View>
+                {/* Skip */}
+                {!isLast && (
+                  <TouchableOpacity className="mb-4" onPress={handleSkip}>
+                    <Text className="text-gray-400 text-center text-lg">
+                      Skip
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* Pagination Dots */}
+                <View className="flex-row justify-center items-center mb-12">
+                  {onboardingScreens.map((_, i) => (
+                    <View
+                      key={i}
+                      className={`w-2 h-2 mx-1 rounded-full ${
+                        i === currentIndex ? "bg-white" : "bg-gray-600"
+                      }`}
+                    />
+                  ))}
+                </View>
+
+                {/* Get Started */}
+                {isLast && (
+                  <TouchableOpacity
+                    className="bg-peace-secondary w-full py-4 px-8 rounded-lg mb-8"
+                    onPress={handleSkip}
+                  >
+                    <Text className="text-white text-center text-lg font-semibold">
+                      Get Started
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          </View>
+        ))}
+      </PagerView>
+    </View>
+  );
+};
+
+export default Onboarding;
