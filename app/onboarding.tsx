@@ -1,4 +1,6 @@
 import { onboardingScreens } from "@/constants/onboardingData";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import PagerView from "react-native-pager-view";
@@ -21,7 +23,7 @@ const Onboarding = () => {
     }, 4000);
 
     return () => clearInterval(timer);
-  }, [currentIndex, autoSliding]);
+  }, [currentIndex, autoSliding, isLast]);
 
   const handlePageChange = (e: any) => {
     const newIndex = e.nativeEvent.position;
@@ -31,8 +33,9 @@ const Onboarding = () => {
     }
   };
 
-  const handleSkip = () => {
-    // TODO: navigate to app main screen
+  const handleSkip = async () => {
+    await AsyncStorage.setItem("hasSeenOnboarding", "true");
+    router.replace("/");
   };
 
   return (
