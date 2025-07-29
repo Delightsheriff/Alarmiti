@@ -13,9 +13,9 @@ module.exports = {
         peace: {
           background: "#121417", // Deep Night Sky
           secondary: "#172645", // Twilight Blue "#1A2A44"
-          text: "#FFFFFF", // Soft Off-White #F0F2F5"
-          subtle: "#40454F", // Stone Gray (for accents, borders)
-          container: "#A3A8B2", // Stone Gray (for light-themed cards if needed)
+          text: "#FFFFFF",
+          subtle: "#40454F",
+          container: "#A3A8B2",
         },
       },
       // State 2: "Awareness Activated" (The Alert State)

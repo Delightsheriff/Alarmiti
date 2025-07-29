@@ -22,9 +22,9 @@ export default function RootLayout() {
   // This is just to reset the onboarding state for development
   // so we can see the onboarding flow again
   // Remove this before deploying
-  // useEffect(() => {
-  //   AsyncStorage.removeItem("hasSeenOnboarding");
-  // }, []);
+  useEffect(() => {
+    AsyncStorage.removeItem("hasSeenOnboarding");
+  }, []);
 
   useEffect(() => {
     const checkOnboarding = async () => {
