@@ -1,31 +1,57 @@
 import { Inter_900Black } from "@expo-google-fonts/inter";
 import { Manrope_400Regular as manrope } from "@expo-google-fonts/manrope";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "./global.css";
 
+SplashScreen.preventAutoHideAsync(); // lock splash until ready
+
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Inter_900Black,
     manrope,
   });
 
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(true);
+
+  //TODO: Remove this effect in production
+  // This is just to reset the onboarding state for development
+  // so we can see the onboarding flow again
+  // Remove this before deploying
+  // useEffect(() => {
+  //   AsyncStorage.removeItem("hasSeenOnboarding");
+  // }, []);
+
   useEffect(() => {
-    if (loaded || error) {
+    const checkOnboarding = async () => {
+      const seen = await AsyncStorage.getItem("hasSeenOnboarding");
+      setShowOnboarding(!seen);
+      setOnboardingChecked(true);
+    };
+    checkOnboarding();
+  }, []);
+
+  useEffect(() => {
+    if ((fontsLoaded || fontError) && onboardingChecked) {
       SplashScreen.hideAsync();
     }
-  }, [loaded, error]);
+  }, [fontsLoaded, fontError, onboardingChecked]);
 
-  if (!loaded && !error) {
-    return null;
-  }
+  if (!fontsLoaded && !fontError) return null;
+  if (!onboardingChecked) return null;
 
   return (
-    <>
-      {/* <StatusBar hidden={true} /> */}
-      <Stack screenOptions={{ headerShown: false }} />
-    </>
+    <Stack screenOptions={{ headerShown: false }}>
+      {showOnboarding ? (
+        <Stack.Screen name="onboarding" />
+      ) : (
+        // <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="home" />
+      )}
+    </Stack>
   );
 }
