@@ -21,7 +21,7 @@ export default function App() {
           </View>
 
           {/* Welcome Card */}
-          <View className="bg-peace-secondary rounded-squircle-lg p-6 mb-6 animate-calm-pulse">
+          <View className="bg-peace-secondary rounded-squircle-lg p-6 mb-6 border border-peace-border animate-calm-pulse">
             <Text className="text-2xl font-manrope font-semibold text-peace-text mb-3">
               Welcome Home
             </Text>
@@ -39,7 +39,7 @@ export default function App() {
 
             <View className="space-y-3">
               {/* Report Alert Button */}
-              <Pressable className="bg-awareness-amber rounded-squircle-md p-4 active:opacity-80">
+              <Pressable className="bg-awareness-amber hover:bg-awareness-dark rounded-squircle-md p-4 active:opacity-80 shadow-lg">
                 <View className="flex-row items-center">
                   <View className="bg-white bg-opacity-20 rounded-full w-10 h-10 items-center justify-center mr-4">
                     <Text className="text-white text-lg font-bold">!</Text>
@@ -48,7 +48,7 @@ export default function App() {
                     <Text className="text-white font-manrope font-semibold text-lg">
                       Report Alert
                     </Text>
-                    <Text className="text-white text-opacity-80 font-manrope">
+                    <Text className="text-white text-opacity-90 font-manrope">
                       Quickly notify your neighbors
                     </Text>
                   </View>
@@ -56,7 +56,7 @@ export default function App() {
               </Pressable>
 
               {/* View Community Button */}
-              <Pressable className="bg-resolved-sage rounded-squircle-md p-4 active:opacity-80">
+              <Pressable className="bg-resolved-sage hover:bg-resolved-dark rounded-squircle-md p-4 active:opacity-80 shadow-lg">
                 <View className="flex-row items-center">
                   <View className="bg-white bg-opacity-20 rounded-full w-10 h-10 items-center justify-center mr-4">
                     <Text className="text-white text-lg font-bold">👥</Text>
@@ -65,7 +65,7 @@ export default function App() {
                     <Text className="text-white font-manrope font-semibold text-lg">
                       View Community
                     </Text>
-                    <Text className="text-white text-opacity-80 font-manrope">
+                    <Text className="text-white text-opacity-90 font-manrope">
                       See what&apos;s happening nearby
                     </Text>
                   </View>
@@ -73,7 +73,7 @@ export default function App() {
               </Pressable>
 
               {/* Settings Button */}
-              <Pressable className="bg-peace-secondary border border-peace-subtle rounded-squircle-md p-4 active:opacity-80">
+              <Pressable className="bg-peace-accent border border-peace-border rounded-squircle-md p-4 active:opacity-80">
                 <View className="flex-row items-center">
                   <View className="bg-peace-subtle bg-opacity-20 rounded-full w-10 h-10 items-center justify-center mr-4">
                     <Text className="text-peace-text text-lg font-bold">
@@ -94,14 +94,14 @@ export default function App() {
           </View>
 
           {/* Stats Section */}
-          <View className="bg-peace-secondary rounded-squircle-lg p-6 mb-6">
+          <View className="bg-peace-secondary border border-peace-border rounded-squircle-lg p-6 mb-6">
             <Text className="text-xl font-manrope font-semibold text-peace-text mb-4">
               Community Stats
             </Text>
 
             <View className="flex-row justify-between">
               <View className="items-center flex-1">
-                <Text className="text-2xl font-manrope font-bold text-awareness-amber">
+                <Text className="text-2xl font-manrope font-bold text-accent-blue">
                   42
                 </Text>
                 <Text className="text-peace-subtle font-manrope text-center">
@@ -119,7 +119,7 @@ export default function App() {
               </View>
 
               <View className="items-center flex-1">
-                <Text className="text-2xl font-manrope font-bold text-peace-text">
+                <Text className="text-2xl font-manrope font-bold text-awareness-amber">
                   7
                 </Text>
                 <Text className="text-peace-subtle font-manrope text-center">
@@ -136,8 +136,8 @@ export default function App() {
             </Text>
 
             <Link href="/onboarding" asChild>
-              <Pressable className="bg-peace-text rounded-squircle-btn px-8 py-4 active:opacity-90">
-                <Text className="text-peace-background font-manrope font-semibold text-lg">
+              <Pressable className="bg-accent-blue hover:bg-accent-purple rounded-squircle-btn px-8 py-4 active:opacity-90 shadow-lg">
+                <Text className="text-white font-manrope font-semibold text-lg">
                   Get Started
                 </Text>
               </Pressable>

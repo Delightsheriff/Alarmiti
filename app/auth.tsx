@@ -1,4 +1,3 @@
-import { Link } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { Dimensions, Pressable, ScrollView, Text, View } from "react-native";
@@ -33,7 +32,7 @@ const Auth = () => {
           </View>
 
           {/* Welcome Message */}
-          <View className="bg-peace-secondary rounded-squircle-lg p-6 mb-8">
+          <View className="bg-peace-secondary border border-peace-border rounded-squircle-lg p-6 mb-8">
             <Text className="text-2xl font-manrope font-semibold text-peace-text mb-3 text-center">
               Welcome Back
             </Text>
@@ -47,13 +46,13 @@ const Auth = () => {
           <View className="mb-8">
             {/* Google Sign In Button */}
             <Pressable
-              className="bg-white rounded-squircle-md p-4 active:opacity-80 shadow-lg"
+              className="bg-white hover:bg-gray-50 rounded-squircle-md p-4 active:opacity-80 shadow-lg border border-peace-border"
               onPress={handleGoogleSignIn}
             >
               <View className="flex-row items-center justify-center">
                 <View className="w-6 h-6 mr-3">
                   {/* Google Icon Placeholder */}
-                  <View className="w-6 h-6 bg-blue-500 rounded-full items-center justify-center">
+                  <View className="w-6 h-6 bg-accent-blue rounded-full items-center justify-center">
                     <Text className="text-white text-xs font-bold">G</Text>
                   </View>
                 </View>
@@ -62,21 +61,6 @@ const Auth = () => {
                 </Text>
               </View>
             </Pressable>
-          </View>
-
-          {/* Alternative Action */}
-          <View className="items-center">
-            <Text className="text-base font-manrope text-peace-subtle mb-4">
-              Don&apos;t have an account?
-            </Text>
-
-            <Link href="/onboarding" asChild>
-              <Pressable className="bg-resolved-sage rounded-squircle-btn px-8 py-4 active:opacity-90">
-                <Text className="text-white font-manrope font-semibold text-lg">
-                  Get Started
-                </Text>
-              </Pressable>
-            </Link>
           </View>
         </View>
       </ScrollView>

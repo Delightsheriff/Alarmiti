@@ -1,4 +1,5 @@
 import { images } from "@/constants/images";
+import { router } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
   Alert,
@@ -12,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import "./global.css";
 
 const { height: screenHeight } = Dimensions.get("window");
 
@@ -31,7 +33,7 @@ const Location = () => {
     if (locationText.trim()) {
       // TODO: Validate and save the entered location
       console.log("Location entered:", locationText);
-      // router.replace("/"); // Navigate to main app
+      router.replace("/auth"); // Navigate to auth page
     } else {
       Alert.alert("Error", "Please enter your location");
     }
@@ -45,15 +47,15 @@ const Location = () => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#1a1a2e" }}>
+    <View className="flex-1 bg-peace-background">
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
       >
         <ScrollView
           ref={scrollViewRef}
-          style={{ flex: 1 }}
+          className="flex-1"
           contentContainerStyle={{
             flexGrow: 1,
             minHeight: screenHeight,
@@ -64,50 +66,17 @@ const Location = () => {
           bounces={false}
         >
           {/* Header Text Section */}
-          <View
-            style={{
-              alignItems: "center",
-              paddingHorizontal: 32,
-              paddingTop: 80,
-              paddingBottom: 32,
-            }}
-          >
-            <Text
-              style={{
-                color: "white",
-                fontSize: 28,
-                fontWeight: "bold",
-                textAlign: "center",
-                lineHeight: 36,
-                marginBottom: 16,
-              }}
-            >
+          <View className="items-center px-8 pt-20 pb-8">
+            <Text className="text-peace-text text-3xl font-bold text-center leading-9 mb-4 font-manrope">
               Enable Location Access
             </Text>
-            <Text
-              style={{
-                color: "#d1d5db",
-                fontSize: 18,
-                textAlign: "center",
-                lineHeight: 28,
-                paddingHorizontal: 16,
-              }}
-            >
+            <Text className="text-peace-subtle text-lg text-center leading-7 px-4 font-manrope">
               To show alerts near you, we need your location or area
             </Text>
           </View>
 
           {/* Image Section - Flexible height */}
-          <View
-            style={{
-              flex: 1,
-              justifyContent: "center",
-              alignItems: "center",
-              paddingHorizontal: 32,
-              minHeight: 200,
-              maxHeight: 300,
-            }}
-          >
+          <View className="flex-1 justify-center items-center px-8 min-h-48 max-h-72">
             <Image
               source={images.location}
               style={{ width: 280, height: 280 }}
@@ -116,83 +85,36 @@ const Location = () => {
           </View>
 
           {/* Bottom Input Section - Fixed at bottom */}
-          <View
-            style={{
-              paddingHorizontal: 32,
-              paddingBottom: 32,
-              paddingTop: 16,
-            }}
-          >
+          <View className="px-8 pb-8 pt-4">
             {/* Use My Location Button */}
             <TouchableOpacity
-              style={{
-                backgroundColor: "white",
-                width: "100%",
-                paddingVertical: 16,
-                paddingHorizontal: 32,
-                borderRadius: 12,
-                marginBottom: 24,
-              }}
+              className="bg-accent-blue w-full py-4 px-8 rounded-squircle-md mb-6 shadow-lg active:opacity-80"
               onPress={handleUseMyLocation}
             >
-              <Text
-                style={{
-                  color: "#1a1a2e",
-                  textAlign: "center",
-                  fontSize: 18,
-                  fontWeight: "600",
-                }}
-              >
+              <Text className="text-white text-center text-lg font-semibold font-manrope">
                 Use My Location
               </Text>
             </TouchableOpacity>
 
             {/* OR Divider */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginBottom: 24,
-              }}
-            >
-              <View
-                style={{ flex: 1, height: 1, backgroundColor: "#4b5563" }}
-              />
-              <Text
-                style={{
-                  color: "#9ca3af",
-                  textAlign: "center",
-                  marginHorizontal: 16,
-                  fontSize: 16,
-                }}
-              >
+            <View className="flex-row items-center mb-6">
+              <View className="flex-1 h-px bg-peace-border" />
+              <Text className="text-peace-subtle text-center mx-4 text-base font-manrope">
                 OR
               </Text>
-              <View
-                style={{ flex: 1, height: 1, backgroundColor: "#4b5563" }}
-              />
+              <View className="flex-1 h-px bg-peace-border" />
             </View>
 
             {/* Location Input */}
-            <View style={{ marginBottom: 24 }}>
+            <View className="mb-6">
               <TextInput
                 ref={textInputRef}
                 value={locationText}
                 onChangeText={setLocationText}
                 onFocus={handleTextInputFocus}
                 placeholder="Enter your neighbourhood or area"
-                placeholderTextColor="#9CA3AF"
-                style={{
-                  backgroundColor: "#374151",
-                  width: "100%",
-                  paddingVertical: 16,
-                  paddingHorizontal: 24,
-                  borderRadius: 12,
-                  color: "white",
-                  fontSize: 16,
-                  borderWidth: 1,
-                  borderColor: "#4b5563",
-                }}
+                placeholderTextColor="#64748B"
+                className="bg-peace-accent w-full py-4 px-6 rounded-squircle-md text-peace-text text-base border border-peace-border"
                 returnKeyType="done"
                 autoCorrect={false}
                 autoCapitalize="words"
@@ -202,23 +124,16 @@ const Location = () => {
 
             {/* Continue Button */}
             <TouchableOpacity
-              style={{
-                width: "100%",
-                paddingVertical: 16,
-                paddingHorizontal: 32,
-                borderRadius: 12,
-                backgroundColor: locationText.trim() ? "#10b981" : "#4b5563",
-              }}
+              className={`w-full py-4 px-8 rounded-squircle-md shadow-lg active:opacity-80 ${
+                locationText.trim() ? "bg-resolved-sage" : "bg-peace-border"
+              }`}
               onPress={handleLocationSubmit}
               disabled={!locationText.trim()}
             >
               <Text
-                style={{
-                  textAlign: "center",
-                  fontSize: 18,
-                  fontWeight: "600",
-                  color: locationText.trim() ? "white" : "#9ca3af",
-                }}
+                className={`text-center text-lg font-semibold font-manrope ${
+                  locationText.trim() ? "text-white" : "text-peace-subtle"
+                }`}
               >
                 Continue
               </Text>

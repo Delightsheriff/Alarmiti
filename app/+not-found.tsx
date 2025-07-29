@@ -33,17 +33,17 @@ const NotFound = () => {
 
           {/* Go Home Button */}
           <TouchableOpacity
-            className="bg-peace-secondary w-full py-4 px-8 rounded-squircle-md"
+            className="bg-accent-blue hover:bg-accent-purple w-full py-4 px-8 rounded-squircle-md shadow-lg"
             onPress={handleGoHome}
           >
-            <Text className="text-peace-text text-center text-lg font-semibold">
+            <Text className="text-white text-center text-lg font-semibold">
               Go Home
             </Text>
           </TouchableOpacity>
 
           {/* Secondary Action */}
           <TouchableOpacity className="mt-4 py-2" onPress={() => router.back()}>
-            <Text className="text-peace-container text-center text-base">
+            <Text className="text-peace-subtle text-center text-base">
               Go Back
             </Text>
           </TouchableOpacity>

@@ -11,21 +11,32 @@ module.exports = {
       },
       colors: {
         peace: {
-          background: "#121417", // Deep Night Sky
-          secondary: "#172645", // Twilight Blue "#1A2A44"
-          text: "#FFFFFF",
-          subtle: "#40454F",
-          container: "#A3A8B2",
+          background: "#0F172A", // Sophisticated slate background
+          secondary: "#1E293B", // Elevated dark slate
+          accent: "#334155", // Medium slate for cards
+          text: "#F8FAFC", // Soft white text
+          subtle: "#64748B", // Balanced gray for secondary text
+          container: "#CBD5E1", // Light slate for containers
+          border: "#475569", // Subtle borders
         },
-      },
-      // State 2: "Awareness Activated" (The Alert State)
-      awareness: {
-        amber: "#FFB400", // Warm Amber Glow
-      },
-
-      // State 3: "Community Engaged / Resolved" (The Positive Action State)
-      resolved: {
-        sage: "#4A936F", // Verdant Sage
+        // State 2: "Awareness Activated" (The Alert State)
+        awareness: {
+          amber: "#F59E0B", // Vibrant amber
+          light: "#FEF3C7", // Light amber background
+          dark: "#D97706", // Darker amber for contrast
+        },
+        // State 3: "Community Engaged / Resolved" (The Positive Action State)
+        resolved: {
+          sage: "#10B981", // Modern emerald green
+          light: "#D1FAE5", // Light green background
+          dark: "#059669", // Darker green for contrast
+        },
+        // Additional accent colors for better UX
+        accent: {
+          blue: "#3B82F6", // Clean blue for CTAs
+          purple: "#8B5CF6", // Purple for special actions
+          rose: "#F43F5E", // Rose for errors/warnings
+        },
       },
       borderRadius: {
         "squircle-sm": "12px", // For smaller elements like tags

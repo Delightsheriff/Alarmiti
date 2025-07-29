@@ -73,7 +73,7 @@ const Onboarding = () => {
               </View>
 
               {/* Bottom */}
-              <View className="flex-[0.6] bg-peace-secondary px-8 pt-12 justify-between">
+              <View className="flex-[0.6] bg-peace-secondary px-8 pt-12 justify-between border-t border-peace-border">
                 <View>
                   <Text className="text-white text-3xl font-bold font-manrope text-center mb-8 leading-tight">
                     {screen.title}
@@ -83,10 +83,10 @@ const Onboarding = () => {
                 <View>
                   {/* Next/Get Started Button */}
                   <TouchableOpacity
-                    className="bg-white w-full py-4 px-8 rounded-xl mb-8"
+                    className="bg-accent-blue hover:bg-accent-purple w-full py-4 px-8 rounded-xl mb-8 shadow-lg"
                     onPress={handleNext}
                   >
-                    <Text className="text-peace-secondary text-center text-lg font-semibold">
+                    <Text className="text-white text-center text-lg font-semibold">
                       {isLast ? "Get Started" : "Next"}
                     </Text>
                   </TouchableOpacity>
@@ -94,7 +94,7 @@ const Onboarding = () => {
                   {/* Skip button - only show if not last */}
                   {!isLast && (
                     <TouchableOpacity onPress={handleSkip}>
-                      <Text className="text-gray-400 text-center text-base mb-5">
+                      <Text className="text-peace-subtle text-center text-base mb-5">
                         Skip
                       </Text>
                     </TouchableOpacity>
