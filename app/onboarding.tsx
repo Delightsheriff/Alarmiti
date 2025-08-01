@@ -1,112 +1,187 @@
-import { onboardingScreens } from "@/constants/onboardingData";
+import {
+  AwarenessIcon,
+  CommunityIcon,
+  ReportingIcon,
+} from "@/components/OnboardingIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import { Dimensions, Image, Text, TouchableOpacity, View } from "react-native";
-import Carousel from "react-native-reanimated-carousel";
+import { useRouter } from "expo-router";
+import React, { useRef, useState } from "react";
+import {
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window");
 
-const Onboarding = () => {
-  const carouselRef = useRef<any>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [autoSliding, setAutoSliding] = useState(true);
-  const isLast = currentIndex === onboardingScreens.length - 1;
+const slides = [
+  {
+    id: 1,
+    icon: CommunityIcon,
+    headline: "Stay connected to your neighborhood.",
+  },
+  {
+    id: 2,
+    icon: AwarenessIcon,
+    headline: "Get alerts about incidents nearby.",
+  },
+  {
+    id: 3,
+    icon: ReportingIcon,
+    headline: "Report problems with just a few taps.",
+  },
+];
 
-  useEffect(() => {
-    if (!autoSliding) return;
+export default function OnboardingScreen() {
+  const router = useRouter();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
-    const timer = setInterval(() => {
-      if (!isLast) {
-        setCurrentIndex((prev) => prev + 1);
-      }
-    }, 4000);
-
-    return () => clearInterval(timer);
-  }, [autoSliding, isLast]);
-
-  const handleSkip = async () => {
-    await AsyncStorage.setItem("hasSeenOnboarding", "true");
-    router.replace("/location");
-  };
-
-  const handleNext = async () => {
-    if (isLast) {
-      // Get Started - complete onboarding
-      await AsyncStorage.setItem("hasSeenOnboarding", "true");
+  const handleGetStarted = async () => {
+    try {
+      await AsyncStorage.setItem("hasCompletedOnboarding", "true");
       router.replace("/location");
-    } else {
-      // Go to next slide
-      setAutoSliding(false);
-      const nextIndex = currentIndex + 1;
-      setCurrentIndex(nextIndex);
-      carouselRef.current?.scrollTo({ index: nextIndex });
+    } catch (error) {
+      console.error("Error saving onboarding status:", error);
     }
   };
 
+  const handleSkip = async () => {
+    try {
+      await AsyncStorage.setItem("hasCompletedOnboarding", "true");
+      router.replace("/auth");
+    } catch (error) {
+      console.error("Error saving onboarding status:", error);
+    }
+  };
+
+  const onScrollEnd = (event: any) => {
+    const slide = Math.round(event.nativeEvent.contentOffset.x / width);
+    setCurrentSlide(slide);
+  };
+
   return (
-    <View className="flex-1 bg-peace-background items-center justify-center">
-      <Carousel
-        ref={carouselRef}
-        loop={false}
-        width={screenWidth}
-        height={screenHeight}
-        autoPlay={autoSliding}
-        autoPlayInterval={4000}
-        data={onboardingScreens}
-        scrollAnimationDuration={600}
-        onSnapToItem={(index) => {
-          setAutoSliding(false);
-          setCurrentIndex(index);
-        }}
-        renderItem={({ index }) => {
-          const screen = onboardingScreens[index];
-          return (
-            <View className="flex-1">
-              {/* Top image */}
-              <View className="flex-[0.4]">
-                <Image
-                  source={screen.image}
-                  className="w-full h-full"
-                  resizeMode="cover"
-                />
-              </View>
-
-              {/* Bottom */}
-              <View className="flex-[0.6] bg-peace-secondary px-8 pt-12 justify-between border-t border-peace-border">
-                <View>
-                  <Text className="text-white text-3xl font-bold font-manrope text-center mb-8 leading-tight">
-                    {screen.title}
-                  </Text>
-                </View>
-
-                <View>
-                  {/* Next/Get Started Button */}
-                  <TouchableOpacity
-                    className="bg-accent-blue hover:bg-accent-purple w-full py-4 px-8 rounded-xl mb-8 shadow-lg"
-                    onPress={handleNext}
-                  >
-                    <Text className="text-white text-center text-lg font-semibold">
-                      {isLast ? "Get Started" : "Next"}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {/* Skip button - only show if not last */}
-                  {!isLast && (
-                    <TouchableOpacity onPress={handleSkip}>
-                      <Text className="text-peace-subtle text-center text-base mb-5">
-                        Skip
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
+    <View style={styles.container}>
+      <ScrollView
+        ref={scrollViewRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={onScrollEnd}
+        style={styles.scrollView}
+      >
+        {slides.map((slide, index) => (
+          <View key={slide.id} style={styles.slide}>
+            <View style={styles.iconContainer}>
+              <slide.icon />
             </View>
-          );
-        }}
-      />
+            <Text style={styles.headline}>{slide.headline}</Text>
+          </View>
+        ))}
+      </ScrollView>
+
+      <View style={styles.bottomSection}>
+        <View style={styles.pagination}>
+          {slides.map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.dot,
+                {
+                  backgroundColor:
+                    index === currentSlide ? "#FFFFFF" : "#B0B8C4",
+                },
+              ]}
+            />
+          ))}
+        </View>
+
+        <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
+          <Text style={styles.skipText}>Skip</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={handleGetStarted}
+          style={styles.getStartedButton}
+        >
+          <Text style={styles.getStartedText}>Get Started</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
-};
+}
 
-export default Onboarding;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#1A2A44",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  slide: {
+    width,
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+  },
+  iconContainer: {
+    marginBottom: 60,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headline: {
+    fontSize: 28,
+    fontFamily: "Manrope-SemiBold",
+    color: "#FFFFFF",
+    textAlign: "center",
+    lineHeight: 36,
+    paddingHorizontal: 20,
+  },
+  bottomSection: {
+    paddingHorizontal: 40,
+    paddingBottom: 60,
+    alignItems: "center",
+  },
+  pagination: {
+    flexDirection: "row",
+    marginBottom: 40,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
+  },
+  skipButton: {
+    marginBottom: 20,
+    paddingVertical: 12,
+  },
+  skipText: {
+    fontSize: 16,
+    fontFamily: "Inter-Medium",
+    color: "#B0B8C4",
+  },
+  getStartedButton: {
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    width: "100%",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  getStartedText: {
+    fontSize: 18,
+    fontFamily: "Inter-SemiBold",
+    color: "#1A2A44",
+  },
+});
