@@ -5,7 +5,7 @@ import {
 } from "@/components/OnboardingIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   ScrollView,
@@ -15,7 +15,7 @@ import {
   View,
 } from "react-native";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 const slides = [
   {

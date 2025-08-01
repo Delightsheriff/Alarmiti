@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { Eye, EyeOff, Shield } from "lucide-react-native";
-import React, { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -95,7 +95,7 @@ export default function AuthScreen() {
       >
         <View style={styles.header}>
           <View style={styles.logoContainer}>
-            <Shield size={48} color="#FFFFFF" strokeWidth={2} />
+            <Ionicons name="shield-checkmark" size={48} color="#FFFFFF" />
           </View>
           <Text style={styles.appName}>AlarmIt</Text>
           <Text style={styles.tagline}>
@@ -170,9 +170,9 @@ export default function AuthScreen() {
                 onPress={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
-                  <EyeOff size={20} color="#B0B8C4" />
+                  <Ionicons name="eye-off" size={20} color="#B0B8C4" />
                 ) : (
-                  <Eye size={20} color="#B0B8C4" />
+                  <Ionicons name="eye" size={20} color="#B0B8C4" />
                 )}
               </TouchableOpacity>
             </View>
@@ -197,9 +197,9 @@ export default function AuthScreen() {
                   onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? (
-                    <EyeOff size={20} color="#B0B8C4" />
+                    <Ionicons name="eye-off" size={20} color="#B0B8C4" />
                   ) : (
-                    <Eye size={20} color="#B0B8C4" />
+                    <Ionicons name="eye" size={20} color="#B0B8C4" />
                   )}
                 </TouchableOpacity>
               </View>
