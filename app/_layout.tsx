@@ -1,57 +1,58 @@
-import { Inter_900Black } from "@expo-google-fonts/inter";
-import { Manrope_400Regular as manrope } from "@expo-google-fonts/manrope";
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from "@expo-google-fonts/inter";
+import {
+  Manrope_400Regular,
+  Manrope_600SemiBold,
+  Manrope_700Bold,
+  useFonts,
+} from "@expo-google-fonts/manrope";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
-import "./global.css";
+import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
 
-SplashScreen.preventAutoHideAsync(); // lock splash until ready
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({
-    Inter_900Black,
-    manrope,
+  // useFrameworkReady();
+
+  const [fontsLoaded] = useFonts({
+    "Manrope-Regular": Manrope_400Regular,
+    "Manrope-SemiBold": Manrope_600SemiBold,
+    "Manrope-Bold": Manrope_700Bold,
+    "Inter-Regular": Inter_400Regular,
+    "Inter-Medium": Inter_500Medium,
+    "Inter-SemiBold": Inter_600SemiBold,
   });
 
-  const [onboardingChecked, setOnboardingChecked] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(true);
-
-  //TODO: Remove this effect in production
-  // This is just to reset the onboarding state for development
-  // so we can see the onboarding flow again
-  // Remove this before deploying
   useEffect(() => {
-    AsyncStorage.removeItem("hasSeenOnboarding");
+    AsyncStorage.removeItem("hasCompletedOnboarding");
   }, []);
 
   useEffect(() => {
-    const checkOnboarding = async () => {
-      const seen = await AsyncStorage.getItem("hasSeenOnboarding");
-      setShowOnboarding(!seen);
-      setOnboardingChecked(true);
-    };
-    checkOnboarding();
-  }, []);
-
-  useEffect(() => {
-    if ((fontsLoaded || fontError) && onboardingChecked) {
+    if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, fontError, onboardingChecked]);
+  }, [fontsLoaded]);
 
-  if (!fontsLoaded && !fontError) return null;
-  if (!onboardingChecked) return null;
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {showOnboarding ? (
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
         <Stack.Screen name="onboarding" />
-      ) : (
-        // <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="home" />
-      )}
-    </Stack>
+        <Stack.Screen name="location" />
+        <Stack.Screen name="auth" />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+      <StatusBar style="light" />
+    </>
   );
 }

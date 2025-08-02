@@ -1,148 +1,268 @@
-import { images } from "@/constants/images";
-import { router } from "expo-router";
-import React, { useRef, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Location from "expo-location";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
   Alert,
-  Dimensions,
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import "./global.css";
 
-const { height: screenHeight } = Dimensions.get("window");
+export default function LocationScreen() {
+  const router = useRouter();
+  const [manualLocation, setManualLocation] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-const Location = () => {
-  const [locationText, setLocationText] = useState("");
-  const scrollViewRef = useRef<ScrollView>(null);
-  const textInputRef = useRef<TextInput>(null);
+  const requestLocationPermission = async () => {
+    setIsLoading(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
 
-  const handleUseMyLocation = () => {
-    // TODO: Implement location permission request and get current location
-    Alert.alert("Location Access", "Location feature will be implemented here");
-    // For now, navigate to next screen
-    // router.replace("/"); // Navigate to main app
-  };
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission Denied",
+          "Location permission is required to show nearby alerts.",
+          [{ text: "OK" }]
+        );
+        setIsLoading(false);
+        return;
+      }
 
-  const handleLocationSubmit = () => {
-    if (locationText.trim()) {
-      // TODO: Validate and save the entered location
-      console.log("Location entered:", locationText);
-      router.replace("/auth"); // Navigate to auth page
-    } else {
-      Alert.alert("Error", "Please enter your location");
+      const location = await Location.getCurrentPositionAsync({
+        timeInterval: 10000,
+      });
+      const reverseGeocode = await Location.reverseGeocodeAsync({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+
+      if (reverseGeocode.length > 0) {
+        const address = reverseGeocode[0];
+        const locationString = `${address.city || address.subregion}, ${
+          address.region
+        }`;
+
+        await AsyncStorage.setItem("userLocation", locationString);
+        await AsyncStorage.setItem("hasCompletedLocationSetup", "true");
+
+        router.replace("/auth");
+      }
+    } catch (error) {
+      console.error("Error getting location:", error);
+      Alert.alert("Error", "Failed to get your location. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleTextInputFocus = () => {
-    // Scroll to the bottom when input is focused
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+  const handleManualLocation = async () => {
+    if (!manualLocation.trim()) {
+      Alert.alert("Error", "Please enter your area or neighborhood.");
+      return;
+    }
+
+    await AsyncStorage.setItem("userLocation", manualLocation.trim());
+    await AsyncStorage.setItem("hasCompletedLocationSetup", "true");
+
+    router.replace("/auth");
   };
 
   return (
-    <View className="flex-1 bg-peace-background">
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView
-          ref={scrollViewRef}
-          className="flex-1"
-          contentContainerStyle={{
-            flexGrow: 1,
-            minHeight: screenHeight,
-            paddingBottom: Platform.OS === "ios" ? 0 : 20,
-          }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-        >
-          {/* Header Text Section */}
-          <View className="items-center px-8 pt-20 pb-8">
-            <Text className="text-peace-text text-3xl font-bold text-center leading-9 mb-4 font-manrope">
-              Enable Location Access
-            </Text>
-            <Text className="text-peace-subtle text-lg text-center leading-7 px-4 font-manrope">
-              To show alerts near you, we need your location or area
-            </Text>
+        <View style={styles.content}>
+          <View style={styles.iconContainer}>
+            <Ionicons name="location-sharp" size={80} color="#FFFFFF" />
           </View>
 
-          {/* Image Section - Flexible height */}
-          <View className="flex-1 justify-center items-center px-8 min-h-48 max-h-72">
-            <Image
-              source={images.location}
-              style={{ width: 280, height: 280 }}
-              resizeMode="contain"
+          <Text style={styles.title}>Enable Location Access</Text>
+          <Text style={styles.subtitle}>
+            To show alerts near you, we need your location or area.
+          </Text>
+
+          <TouchableOpacity
+            style={[styles.primaryButton, isLoading && styles.buttonDisabled]}
+            onPress={requestLocationPermission}
+            disabled={isLoading}
+          >
+            <Ionicons name="location-sharp" size={20} color="#1A2A44" />
+            <Text style={styles.primaryButtonText}>
+              {isLoading ? "Getting Location..." : "Use My Current Location"}
+            </Text>
+          </TouchableOpacity>
+
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>
+              Enter Your Area or Neighborhood
+            </Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="e.g., Yaba, Lagos"
+              placeholderTextColor="#B0B8C4"
+              value={manualLocation}
+              onChangeText={setManualLocation}
+              autoCapitalize="words"
+              returnKeyType="done"
+              onSubmitEditing={handleManualLocation}
             />
           </View>
 
-          {/* Bottom Input Section - Fixed at bottom */}
-          <View className="px-8 pb-8 pt-4">
-            {/* Use My Location Button */}
-            <TouchableOpacity
-              className="bg-accent-blue w-full py-4 px-8 rounded-squircle-md mb-6 shadow-lg active:opacity-80"
-              onPress={handleUseMyLocation}
+          <TouchableOpacity
+            style={[
+              styles.continueButton,
+              !manualLocation.trim() && styles.buttonDisabled,
+            ]}
+            onPress={handleManualLocation}
+            disabled={!manualLocation.trim()}
+          >
+            <Text
+              style={[
+                styles.continueButtonText,
+                !manualLocation.trim() && styles.buttonTextDisabled,
+              ]}
             >
-              <Text className="text-white text-center text-lg font-semibold font-manrope">
-                Use My Location
-              </Text>
-            </TouchableOpacity>
-
-            {/* OR Divider */}
-            <View className="flex-row items-center mb-6">
-              <View className="flex-1 h-px bg-peace-border" />
-              <Text className="text-peace-subtle text-center mx-4 text-base font-manrope">
-                OR
-              </Text>
-              <View className="flex-1 h-px bg-peace-border" />
-            </View>
-
-            {/* Location Input */}
-            <View className="mb-6">
-              <TextInput
-                ref={textInputRef}
-                value={locationText}
-                onChangeText={setLocationText}
-                onFocus={handleTextInputFocus}
-                placeholder="Enter your neighbourhood or area"
-                placeholderTextColor="#64748B"
-                className="bg-peace-accent w-full py-4 px-6 rounded-squircle-md text-peace-text text-base border border-peace-border"
-                returnKeyType="done"
-                autoCorrect={false}
-                autoCapitalize="words"
-                blurOnSubmit={true}
-              />
-            </View>
-
-            {/* Continue Button */}
-            <TouchableOpacity
-              className={`w-full py-4 px-8 rounded-squircle-md shadow-lg active:opacity-80 ${
-                locationText.trim() ? "bg-resolved-sage" : "bg-peace-border"
-              }`}
-              onPress={handleLocationSubmit}
-              disabled={!locationText.trim()}
-            >
-              <Text
-                className={`text-center text-lg font-semibold font-manrope ${
-                  locationText.trim() ? "text-white" : "text-peace-subtle"
-                }`}
-              >
-                Continue
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+              Continue
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
-};
+}
 
-export default Location;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#1A2A44",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    minHeight: "100%",
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+    justifyContent: "center",
+  },
+  iconContainer: {
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  title: {
+    fontSize: 28,
+    fontFamily: "Manrope",
+    fontWeight: "700",
+    color: "#FFFFFF",
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontFamily: "Inter",
+    color: "#B0B8C4",
+    textAlign: "center",
+    lineHeight: 24,
+    marginBottom: 40,
+  },
+  primaryButton: {
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 32,
+    minHeight: 56,
+  },
+  primaryButtonText: {
+    fontSize: 16,
+    fontFamily: "Inter",
+    fontWeight: "600",
+    color: "#1A2A44",
+    marginLeft: 8,
+  },
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#B0B8C4",
+    opacity: 0.3,
+  },
+  dividerText: {
+    fontSize: 14,
+    fontFamily: "Inter",
+    color: "#B0B8C4",
+    marginHorizontal: 16,
+  },
+  inputContainer: {
+    marginBottom: 24,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontFamily: "Inter",
+    fontWeight: "500",
+    color: "#FFFFFF",
+    marginBottom: 8,
+  },
+  textInput: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    fontFamily: "Inter",
+    color: "#FFFFFF",
+    minHeight: 56,
+  },
+  continueButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    alignItems: "center",
+    minHeight: 56,
+  },
+  continueButtonText: {
+    fontSize: 16,
+    fontFamily: "Inter",
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  buttonTextDisabled: {
+    color: "#B0B8C4",
+  },
+});
