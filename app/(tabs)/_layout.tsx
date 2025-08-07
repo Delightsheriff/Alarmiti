@@ -27,12 +27,11 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ size, color }) => (
+          tabBarIcon: ({ size, color, focused }) => (
             <Ionicons
-              name="home-outline"
+              name={focused ? "home" : "home-outline"}
               size={size}
               color={color}
-              strokeWidth={2}
             />
           ),
         }}
@@ -41,12 +40,11 @@ export default function TabLayout() {
         name="feed"
         options={{
           title: "Feed",
-          tabBarIcon: ({ size, color }) => (
+          tabBarIcon: ({ size, color, focused }) => (
             <Ionicons
-              name="list-outline"
+              name={focused ? "list" : "list-outline"}
               size={size}
               color={color}
-              strokeWidth={2}
             />
           ),
         }}
@@ -55,12 +53,11 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ size, color }) => (
+          tabBarIcon: ({ size, color, focused }) => (
             <Ionicons
-              name="person-outline"
+              name={focused ? "person" : "person-outline"}
               size={size}
               color={color}
-              strokeWidth={2}
             />
           ),
         }}
