@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -16,6 +17,7 @@ import {
 } from "react-native";
 
 export default function AuthScreen() {
+  const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -62,17 +64,18 @@ export default function AuthScreen() {
 
       Alert.alert(
         "Success",
-        isSignUp ? "Account created successfully!" : "Welcome back!",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              // Navigate to main app (for now, stay here)
-              console.log("User authenticated successfully");
-            },
-          },
-        ]
+        isSignUp ? "Account created successfully!" : "Welcome back!"
+        // [
+        //   {
+        //     text: "OK",
+        //     onPress: () => {
+        //       // Navigate to main app (for now, stay here)
+        //       console.log("User authenticated successfully");
+        //     },
+        //   },
+        // ]
       );
+      router.replace("/(tabs)");
     } catch (error) {
       Alert.alert("Error", "Authentication failed. Please try again.");
       console.error("Auth error:", error);

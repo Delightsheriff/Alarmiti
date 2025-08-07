@@ -117,7 +117,7 @@ export default function LocationScreen() {
             </Text>
             <TextInput
               style={styles.textInput}
-              placeholder="e.g., Yaba, Lagos"
+              placeholder="E.g., Choba, Port Harcourt"
               placeholderTextColor="#B0B8C4"
               value={manualLocation}
               onChangeText={setManualLocation}
@@ -129,7 +129,7 @@ export default function LocationScreen() {
 
           <TouchableOpacity
             style={[
-              styles.continueButton,
+              styles.primaryButton,
               !manualLocation.trim() && styles.buttonDisabled,
             ]}
             onPress={handleManualLocation}
@@ -137,7 +137,7 @@ export default function LocationScreen() {
           >
             <Text
               style={[
-                styles.continueButtonText,
+                styles.primaryButtonText,
                 !manualLocation.trim() && styles.buttonTextDisabled,
               ]}
             >
@@ -243,26 +243,10 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     minHeight: 56,
   },
-  continueButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.3)",
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 16,
-    alignItems: "center",
-    minHeight: 56,
-  },
-  continueButtonText: {
-    fontSize: 16,
-    fontFamily: "Inter",
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
   buttonDisabled: {
     opacity: 0.5,
   },
   buttonTextDisabled: {
-    color: "#B0B8C4",
+    color: "#1A2A44",
   },
 });

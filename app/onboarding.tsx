@@ -40,6 +40,7 @@ export default function OnboardingScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  //TODO: REMOVE THIS LATER
   // Clear AsyncStorage for testing purposes
   useEffect(() => {
     const clearStorageForTesting = async () => {
@@ -59,15 +60,6 @@ export default function OnboardingScreen() {
     try {
       await AsyncStorage.setItem("hasCompletedOnboarding", "true");
       router.replace("/location");
-    } catch (error) {
-      console.error("Error saving onboarding status:", error);
-    }
-  };
-
-  const handleSkip = async () => {
-    try {
-      await AsyncStorage.setItem("hasCompletedOnboarding", "true");
-      router.replace("/auth");
     } catch (error) {
       console.error("Error saving onboarding status:", error);
     }
@@ -113,10 +105,6 @@ export default function OnboardingScreen() {
             />
           ))}
         </View>
-
-        <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-          <Text style={styles.skipText}>Skip</Text>
-        </TouchableOpacity>
 
         <TouchableOpacity
           onPress={handleGetStarted}
