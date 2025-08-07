@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Link } from "expo-router";
 import {
   FlatList,
   SafeAreaView,
@@ -41,7 +42,9 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Alarmit</Text>
         <TouchableOpacity style={styles.settingsButton}>
-          <Ionicons name="settings" size={24} color="#FFFFFF" />
+          <Link href="/(tabs)/profile">
+            <Ionicons name="settings" size={24} color="#FFFFFF" />
+          </Link>
         </TouchableOpacity>
       </View>
 
