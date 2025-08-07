@@ -1,8 +1,8 @@
+import CustomSafeAreaView from "@/components/custom-safe-area-view";
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import {
   FlatList,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -29,6 +29,54 @@ export default function HomeScreen() {
     },
     {
       id: 3,
+      type: "theft",
+      title: "Package theft reported on Oak...",
+      reporter: "Emily Rodriguez",
+      time: "6 hours ago",
+      icon: "cube" as const,
+    },
+    {
+      id: 24,
+      type: "meeting",
+      title: "Community meeting scheduled for...",
+      reporter: "Michael Davis",
+      time: "4 hours ago",
+      icon: "people" as const,
+    },
+    {
+      id: 32,
+      type: "theft",
+      title: "Package theft reported on Oak...",
+      reporter: "Emily Rodriguez",
+      time: "6 hours ago",
+      icon: "cube" as const,
+    },
+    {
+      id: 21,
+      type: "meeting",
+      title: "Community meeting scheduled for...",
+      reporter: "Michael Davis",
+      time: "4 hours ago",
+      icon: "people" as const,
+    },
+    {
+      id: 355,
+      type: "theft",
+      title: "Package theft reported on Oak...",
+      reporter: "Emily Rodriguez",
+      time: "6 hours ago",
+      icon: "cube" as const,
+    },
+    {
+      id: 234,
+      type: "meeting",
+      title: "Community meeting scheduled for...",
+      reporter: "Michael Davis",
+      time: "4 hours ago",
+      icon: "people" as const,
+    },
+    {
+      id: 332,
       type: "theft",
       title: "Package theft reported on Oak...",
       reporter: "Emily Rodriguez",
@@ -74,35 +122,33 @@ export default function HomeScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <FlatList
-        data={recentActivities}
-        renderItem={renderActivity}
-        keyExtractor={(item) => item.id.toString()}
-        ListHeaderComponent={renderHeader}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+    <>
+      <CustomSafeAreaView>
+        <FlatList
+          data={recentActivities}
+          renderItem={renderActivity}
+          keyExtractor={(item) => item.id.toString()}
+          ListHeaderComponent={renderHeader}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => console.log("Report incident")}
-      >
-        <Ionicons name="add" size={28} color="#FFFFFF" />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => console.log("Report incident")}
+        >
+          <Ionicons name="add" size={28} color="#FFFFFF" />
+        </TouchableOpacity>
 
-      <View style={styles.fabLabel}>
-        <Text style={styles.fabLabelText}>Report Incident</Text>
-      </View>
-    </SafeAreaView>
+        <View style={styles.fabLabel}>
+          <Text style={styles.fabLabelText}>Report Incident</Text>
+        </View>
+      </CustomSafeAreaView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#1A2A44",
-  },
   listContent: {
     paddingBottom: 100, // Space for the floating button
   },
@@ -113,6 +159,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 16,
     paddingBottom: 24,
+    borderBottomColor: "#ffffff",
+    borderBottomWidth: 1,
   },
   headerTitle: {
     fontSize: 24,

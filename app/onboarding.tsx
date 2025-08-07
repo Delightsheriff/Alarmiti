@@ -5,7 +5,7 @@ import {
 } from "@/components/OnboardingIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   Dimensions,
   ScrollView,
@@ -42,19 +42,19 @@ export default function OnboardingScreen() {
 
   //TODO: REMOVE THIS LATER
   // Clear AsyncStorage for testing purposes
-  useEffect(() => {
-    const clearStorageForTesting = async () => {
-      try {
-        await AsyncStorage.removeItem("hasCompletedOnboarding");
-        console.log("AsyncStorage cleared for testing");
-      } catch (error) {
-        console.error("Error clearing AsyncStorage:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const clearStorageForTesting = async () => {
+  //     try {
+  //       await AsyncStorage.removeItem("hasCompletedOnboarding");
+  //       console.log("AsyncStorage cleared for testing");
+  //     } catch (error) {
+  //       console.error("Error clearing AsyncStorage:", error);
+  //     }
+  //   };
 
-    // Uncomment the line below to clear storage on component mount
-    clearStorageForTesting();
-  }, []);
+  //   // Uncomment the line below to clear storage on component mount
+  //   clearStorageForTesting();
+  // }, []);
 
   const handleGetStarted = async () => {
     try {

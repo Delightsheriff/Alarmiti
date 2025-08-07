@@ -1,10 +1,10 @@
+import CustomSafeAreaView from "@/components/custom-safe-area-view";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -30,7 +30,7 @@ export default function ReportIncidentScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <CustomSafeAreaView>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -120,15 +120,11 @@ export default function ReportIncidentScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </CustomSafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#1A2A44",
-  },
   keyboardView: {
     flex: 1,
   },

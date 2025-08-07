@@ -1,7 +1,7 @@
+import CustomSafeAreaView from "@/components/custom-safe-area-view";
 import { Ionicons } from "@expo/vector-icons";
 import {
   Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -49,7 +49,7 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <CustomSafeAreaView>
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -106,7 +106,7 @@ export default function ProfileScreen() {
           </View>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </CustomSafeAreaView>
   );
 }
 

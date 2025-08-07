@@ -1,8 +1,8 @@
+import CustomSafeAreaView from "@/components/custom-safe-area-view";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
   Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -78,7 +78,7 @@ export default function FeedScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <CustomSafeAreaView>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Alarmit</Text>
         <TouchableOpacity
@@ -129,15 +129,11 @@ export default function FeedScreen() {
           ))}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </CustomSafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#1A2A44",
-  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
