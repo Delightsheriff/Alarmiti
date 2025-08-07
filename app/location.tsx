@@ -43,17 +43,19 @@ export default function LocationScreen() {
         longitude: location.coords.longitude,
       });
 
+      let locationString = "Current Location";
+
       if (reverseGeocode.length > 0) {
         const address = reverseGeocode[0];
-        const locationString = `${address.city || address.subregion}, ${
+        locationString = `${address.city || address.subregion}, ${
           address.region
         }`;
-
-        await AsyncStorage.setItem("userLocation", locationString);
-        await AsyncStorage.setItem("hasCompletedLocationSetup", "true");
-
-        router.replace("/auth");
       }
+
+      await AsyncStorage.setItem("userLocation", locationString);
+      await AsyncStorage.setItem("hasCompletedLocationSetup", "true");
+
+      router.replace("/auth");
     } catch (error) {
       console.error("Error getting location:", error);
       Alert.alert("Error", "Failed to get your location. Please try again.");
