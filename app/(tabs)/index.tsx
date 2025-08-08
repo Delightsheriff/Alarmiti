@@ -2,7 +2,8 @@ import CustomSafeAreaView from "@/components/custom-safe-area-view";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
-  FlatList,
+  Image,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -12,125 +13,122 @@ import {
 export default function HomeScreen() {
   const router = useRouter();
 
-  const recentActivities = [
+  const feedItems = [
     {
       id: 1,
-      type: "suspicious",
-      title: "Suspicious activity reported near UNIPORT...",
-      reporter: "Chioma Okwu",
-      time: "2 hours ago",
-      icon: "eye" as const,
+      type: "urgent",
+      title: "Armed Robbery Alert",
+      description:
+        "Armed robbers attacked commuters along Aba Road near Mile 3 Junction. Three motorcycles involved, carrying weapons. Please avoid the area and use alternative routes.",
+      image:
+        "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=400",
+      time: "16:30 PM",
+      reporter: "Chika Okafor",
     },
     {
       id: 2,
-      type: "meeting",
-      title: "Town hall meeting scheduled for...",
-      reporter: "Emeka Nwosu",
-      time: "4 hours ago",
-      icon: "people" as const,
+      title: "Community Security Meeting",
+      description:
+        "Town Union security meeting tomorrow at 6 PM at GRA Community Hall. Discussing recent security challenges and establishing vigilante patrols.",
+      image:
+        "https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=400",
+      time: "14:15 PM",
+      reporter: "GRA Residents Association",
     },
     {
       id: 3,
-      type: "theft",
-      title: "Phone theft reported at Aluu Junction...",
-      reporter: "Fatima Abdullahi",
-      time: "6 hours ago",
-      icon: "phone-portrait" as const,
+      title: "Pipeline Vandalism Warning",
+      description:
+        "Suspected pipeline vandalism activities reported in Rumuokoro area. NSCDC has been alerted. Residents should stay vigilant and report suspicious movements.",
+      image:
+        "https://images.pexels.com/photos/4553618/pexels-photo-4553618.jpeg?auto=compress&cs=tinysrgb&w=400",
+      time: "12:45 PM",
+      reporter: "Emeka Nwachukwu",
     },
     {
       id: 4,
-      type: "vandalism",
-      title: "Vandalism at Choba Motor Park...",
-      reporter: "Tunde Adebayo",
-      time: "8 hours ago",
-      icon: "hammer" as const,
+      title: "Missing Child Found",
+      description:
+        "7-year-old Blessing found safe near Mile 1 Market. She was lost for 3 hours. Thanks to all who helped in the search. Family is grateful.",
+      image:
+        "https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=400",
+      time: "10:20 AM",
+      reporter: "Adaeze Okoro",
     },
     {
       id: 5,
-      type: "noise",
-      title: "Noise complaint from Mgbuoba area...",
-      reporter: "Grace Edet",
-      time: "12 hours ago",
-      icon: "volume-high" as const,
+      title: "Cultist Activity Alert",
+      description:
+        "Suspected cultist gathering reported in Diobu area last night. Residents heard gunshots around 2 AM. Police have been notified and patrols increased.",
+      image:
+        "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=400",
+      time: "08:30 AM",
+      reporter: "Ikenna Eze",
     },
     {
       id: 6,
-      type: "safety",
-      title: "Poor lighting reported on East-West Road...",
-      reporter: "Ahmed Ibrahim",
-      time: "1 day ago",
-      icon: "bulb" as const,
-    },
-    {
-      id: 7,
-      type: "accident",
-      title: "Minor accident at Eleme Junction...",
-      reporter: "Blessing Okafor",
-      time: "1 day ago",
-      icon: "warning" as const,
-    },
-    {
-      id: 8,
-      type: "robbery",
-      title: "Armed robbery attempt at Mile 1 Market...",
-      reporter: "Kemi Alabi",
-      time: "2 days ago",
-      icon: "shield-half" as const,
-    },
-    {
-      id: 9,
-      type: "fire",
-      title: "Small fire outbreak in Trans-Amadi...",
-      reporter: "Victor Obi",
-      time: "2 days ago",
-      icon: "flame" as const,
+      title: "Kidnapping Attempt Foiled",
+      description:
+        "Quick action by local vigilante prevented kidnapping attempt on Eleme Junction Road. Three suspects arrested. Vehicle recovered with fake number plates.",
+      image:
+        "https://images.pexels.com/photos/4553618/pexels-photo-4553618.jpeg?auto=compress&cs=tinysrgb&w=400",
+      time: "06:15 AM",
+      reporter: "Port Harcourt Vigilante",
     },
   ];
-
-  const renderListHeader = () => (
-    <View>
-      <Text style={styles.sectionTitle}>Recent Activity</Text>
-    </View>
-  );
-
-  const renderActivity = ({ item }: { item: (typeof recentActivities)[0] }) => (
-    <TouchableOpacity style={styles.activityItem}>
-      <View style={styles.activityIcon}>
-        <Ionicons name={item.icon} size={20} color="#1A2A44" />
-      </View>
-      <View style={styles.activityContent}>
-        <Text style={styles.activityTitle}>{item.title}</Text>
-        <Text style={styles.activityMeta}>Reported by {item.reporter}</Text>
-      </View>
-    </TouchableOpacity>
-  );
 
   return (
     <CustomSafeAreaView>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Alarmit</Text>
-        <TouchableOpacity
-          style={styles.settingsButton}
-          onPress={() => router.push("/search")}
-        >
-          <Ionicons name="search" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={recentActivities}
-        renderItem={renderActivity}
-        keyExtractor={(item) => item.id.toString()}
-        ListHeaderComponent={renderListHeader}
-        contentContainerStyle={styles.listContent}
+      <ScrollView
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
-      />
+      >
+        <View style={styles.feedContainer}>
+          {feedItems.map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.feedItem}
+              onPress={() => router.push("/incident-details")}
+            >
+              {item.type === "urgent" && (
+                <View style={styles.urgentBadge}>
+                  <Text style={styles.urgentText}>Urgent</Text>
+                </View>
+              )}
+
+              <View style={styles.feedContent}>
+                <Text style={styles.feedTitle}>{item.title}</Text>
+                <Text style={styles.feedDescription}>{item.description}</Text>
+
+                <View style={styles.feedMeta}>
+                  <View style={styles.metaItem}>
+                    <Ionicons name="time" size={14} color="#B0B8C4" />
+                    <Text style={styles.metaText}>{item.time}</Text>
+                  </View>
+                  <View style={styles.metaItem}>
+                    <Ionicons name="person" size={14} color="#B0B8C4" />
+                    <Text style={styles.metaText}>
+                      Reported by {item.reporter}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <Image source={{ uri: item.image }} style={styles.feedImage} />
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
 
       <TouchableOpacity
         style={styles.fab}
         onPress={() => router.push("/report-incident")}
       >
-        <Ionicons name="add" size={28} color="#FFFFFF" />
+        <Ionicons name="add" size={28} color="#1A2A44" />
       </TouchableOpacity>
 
       <View style={styles.fabLabel}>
@@ -141,12 +139,9 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  listContent: {
-    paddingBottom: 100,
-  },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 24,
     paddingTop: 16,
@@ -157,64 +152,81 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope-Bold",
     color: "#FFFFFF",
   },
-  settingsButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    alignItems: "center",
-    justifyContent: "center",
+  scrollView: {
+    flex: 1,
   },
-
-  sectionTitle: {
-    fontSize: 20,
-    fontFamily: "Manrope-SemiBold",
-    color: "#FFFFFF",
-    marginBottom: 16,
+  feedContainer: {
     paddingHorizontal: 24,
+    paddingBottom: 100,
+    gap: 16,
   },
-  activityItem: {
-    flexDirection: "row",
-    alignItems: "center",
+  feedItem: {
     backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.2)",
-    marginHorizontal: 24,
-    marginBottom: 12,
+    position: "relative",
   },
-  activityIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
+  urgentBadge: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    backgroundColor: "#FF6B6B",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    zIndex: 1,
   },
-  activityContent: {
-    flex: 1,
-  },
-  activityTitle: {
-    fontSize: 16,
+  urgentText: {
+    fontSize: 12,
     fontFamily: "Inter-SemiBold",
     color: "#FFFFFF",
-    marginBottom: 4,
   },
-  activityMeta: {
+  feedContent: {
+    marginBottom: 12,
+  },
+  feedTitle: {
+    fontSize: 18,
+    fontFamily: "Manrope-SemiBold",
+    color: "#FFFFFF",
+    marginBottom: 8,
+  },
+  feedDescription: {
     fontSize: 14,
     fontFamily: "Inter-Regular",
     color: "#B0B8C4",
+    lineHeight: 20,
+    marginBottom: 12,
   },
+  feedMeta: {
+    gap: 8,
+  },
+  metaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  metaText: {
+    fontSize: 12,
+    fontFamily: "Inter-Regular",
+    color: "#B0B8C4",
+  },
+  feedImage: {
+    width: "100%",
+    height: 120,
+    borderRadius: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+  },
+
   fab: {
     position: "absolute",
     right: 24,
     bottom: 100,
     width: 56,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: "#007AFF",
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
@@ -226,7 +238,7 @@ const styles = StyleSheet.create({
   fabLabel: {
     position: "absolute",
     right: 24,
-    bottom: 50,
+    bottom: 60,
     backgroundColor: "rgba(0, 0, 0, 0.8)",
     paddingHorizontal: 12,
     paddingVertical: 6,

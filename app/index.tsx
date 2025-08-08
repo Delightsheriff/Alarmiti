@@ -27,7 +27,8 @@ export default function InitialScreen() {
         router.replace("/auth");
       } else {
         // User is authenticated, go to main app (we'll add this later)
-        router.replace("/auth"); // For now, redirect to auth
+        router.replace("/(tabs)");
+        // router.replace("/auth"); // For now, redirect to auth
       }
     } catch (error) {
       console.error("Error checking user status:", error);
