@@ -9,7 +9,6 @@ import {
   Manrope_700Bold,
   useFonts,
 } from "@expo-google-fonts/manrope";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -29,9 +28,9 @@ export default function RootLayout() {
     "Inter-SemiBold": Inter_600SemiBold,
   });
 
-  useEffect(() => {
-    AsyncStorage.removeItem("hasCompletedOnboarding");
-  }, []);
+  // useEffect(() => {
+  //   AsyncStorage.removeItem("hasCompletedOnboarding");
+  // }, []);
 
   useEffect(() => {
     if (fontsLoaded) {

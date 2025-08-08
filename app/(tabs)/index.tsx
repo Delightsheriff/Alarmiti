@@ -1,6 +1,6 @@
 import CustomSafeAreaView from "@/components/custom-safe-area-view";
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
 import {
   FlatList,
   StyleSheet,
@@ -10,101 +10,85 @@ import {
 } from "react-native";
 
 export default function HomeScreen() {
+  const router = useRouter();
+
   const recentActivities = [
     {
       id: 1,
       type: "suspicious",
-      title: "Suspicious vehicle parked on Elm...",
-      reporter: "Sarah Chen",
+      title: "Suspicious activity reported near UNIPORT...",
+      reporter: "Chioma Okwu",
       time: "2 hours ago",
-      icon: "car" as const,
+      icon: "eye" as const,
     },
     {
       id: 2,
       type: "meeting",
-      title: "Community meeting scheduled for...",
-      reporter: "Michael Davis",
+      title: "Town hall meeting scheduled for...",
+      reporter: "Emeka Nwosu",
       time: "4 hours ago",
       icon: "people" as const,
     },
     {
       id: 3,
       type: "theft",
-      title: "Package theft reported on Oak...",
-      reporter: "Emily Rodriguez",
+      title: "Phone theft reported at Aluu Junction...",
+      reporter: "Fatima Abdullahi",
       time: "6 hours ago",
-      icon: "cube" as const,
+      icon: "phone-portrait" as const,
     },
     {
-      id: 24,
-      type: "meeting",
-      title: "Community meeting scheduled for...",
-      reporter: "Michael Davis",
-      time: "4 hours ago",
-      icon: "people" as const,
+      id: 4,
+      type: "vandalism",
+      title: "Vandalism at Choba Motor Park...",
+      reporter: "Tunde Adebayo",
+      time: "8 hours ago",
+      icon: "hammer" as const,
     },
     {
-      id: 32,
-      type: "theft",
-      title: "Package theft reported on Oak...",
-      reporter: "Emily Rodriguez",
-      time: "6 hours ago",
-      icon: "cube" as const,
+      id: 5,
+      type: "noise",
+      title: "Noise complaint from Mgbuoba area...",
+      reporter: "Grace Edet",
+      time: "12 hours ago",
+      icon: "volume-high" as const,
     },
     {
-      id: 21,
-      type: "meeting",
-      title: "Community meeting scheduled for...",
-      reporter: "Michael Davis",
-      time: "4 hours ago",
-      icon: "people" as const,
+      id: 6,
+      type: "safety",
+      title: "Poor lighting reported on East-West Road...",
+      reporter: "Ahmed Ibrahim",
+      time: "1 day ago",
+      icon: "bulb" as const,
     },
     {
-      id: 355,
-      type: "theft",
-      title: "Package theft reported on Oak...",
-      reporter: "Emily Rodriguez",
-      time: "6 hours ago",
-      icon: "cube" as const,
+      id: 7,
+      type: "accident",
+      title: "Minor accident at Eleme Junction...",
+      reporter: "Blessing Okafor",
+      time: "1 day ago",
+      icon: "warning" as const,
     },
     {
-      id: 234,
-      type: "meeting",
-      title: "Community meeting scheduled for...",
-      reporter: "Michael Davis",
-      time: "4 hours ago",
-      icon: "people" as const,
+      id: 8,
+      type: "robbery",
+      title: "Armed robbery attempt at Mile 1 Market...",
+      reporter: "Kemi Alabi",
+      time: "2 days ago",
+      icon: "shield-half" as const,
     },
     {
-      id: 332,
-      type: "theft",
-      title: "Package theft reported on Oak...",
-      reporter: "Emily Rodriguez",
-      time: "6 hours ago",
-      icon: "cube" as const,
+      id: 9,
+      type: "fire",
+      title: "Small fire outbreak in Trans-Amadi...",
+      reporter: "Victor Obi",
+      time: "2 days ago",
+      icon: "flame" as const,
     },
   ];
 
-  const renderHeader = () => (
+  const renderListHeader = () => (
     <View>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Alarmit</Text>
-        <TouchableOpacity style={styles.settingsButton}>
-          <Link href="/(tabs)/profile">
-            <Ionicons name="settings" size={24} color="#FFFFFF" />
-          </Link>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#B0B8C4" />
-          <Text style={styles.searchPlaceholder}>
-            Search for incidents or alerts
-          </Text>
-        </View>
-      </View>
-
       <Text style={styles.sectionTitle}>Recent Activity</Text>
     </View>
   );
@@ -122,35 +106,43 @@ export default function HomeScreen() {
   );
 
   return (
-    <>
-      <CustomSafeAreaView>
-        <FlatList
-          data={recentActivities}
-          renderItem={renderActivity}
-          keyExtractor={(item) => item.id.toString()}
-          ListHeaderComponent={renderHeader}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
-
+    <CustomSafeAreaView>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Alarmit</Text>
         <TouchableOpacity
-          style={styles.fab}
-          onPress={() => console.log("Report incident")}
+          style={styles.settingsButton}
+          onPress={() => router.push("/search")}
         >
-          <Ionicons name="add" size={28} color="#FFFFFF" />
+          <Ionicons name="search" size={24} color="#FFFFFF" />
         </TouchableOpacity>
+      </View>
 
-        <View style={styles.fabLabel}>
-          <Text style={styles.fabLabelText}>Report Incident</Text>
-        </View>
-      </CustomSafeAreaView>
-    </>
+      <FlatList
+        data={recentActivities}
+        renderItem={renderActivity}
+        keyExtractor={(item) => item.id.toString()}
+        ListHeaderComponent={renderListHeader}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      />
+
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => router.push("/report-incident")}
+      >
+        <Ionicons name="add" size={28} color="#FFFFFF" />
+      </TouchableOpacity>
+
+      <View style={styles.fabLabel}>
+        <Text style={styles.fabLabelText}>Report Incident</Text>
+      </View>
+    </CustomSafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   listContent: {
-    paddingBottom: 100, // Space for the floating button
+    paddingBottom: 100,
   },
   header: {
     flexDirection: "row",
@@ -159,8 +151,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 16,
     paddingBottom: 24,
-    borderBottomColor: "#ffffff",
-    borderBottomWidth: 1,
   },
   headerTitle: {
     fontSize: 24,
@@ -175,26 +165,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  searchContainer: {
-    paddingHorizontal: 24,
-    marginBottom: 32,
-  },
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-  },
-  searchPlaceholder: {
-    fontSize: 16,
-    fontFamily: "Inter-Regular",
-    color: "#B0B8C4",
-    marginLeft: 12,
-  },
+
   sectionTitle: {
     fontSize: 20,
     fontFamily: "Manrope-SemiBold",

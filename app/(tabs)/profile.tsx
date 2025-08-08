@@ -26,9 +26,9 @@ export default function ProfileScreen() {
     {
       title: "Account",
       items: [
-        { icon: "mail", label: "Email", value: "sophia.carter@email.com" },
+        { icon: "mail", label: "Email", value: "test@email.com" },
         { icon: "call", label: "Phone", value: "+1 (555) 123-4567" },
-        { icon: "location", label: "Address", value: "123 Main St, Anytown" },
+        { icon: "location", label: "Address", value: "123 Choba, Uniport" },
       ],
     },
     {
@@ -61,15 +61,15 @@ export default function ProfileScreen() {
         <View style={styles.profileSection}>
           <Image
             source={{
-              uri: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400",
+              uri: "https://res.cloudinary.com/dhlbkd9i9/image/upload/v1754604178/Screenshot_2025-08-06-00-51-09-885_com.whatsapp_q7qr59.png",
             }}
             style={styles.profileImage}
           />
-          <Text style={styles.profileName}>Sophia Carter</Text>
+          <Text style={styles.profileName}>Dynamo</Text>
           <TouchableOpacity style={styles.viewProfileButton}>
             <Text style={styles.viewProfileText}>View Profile</Text>
           </TouchableOpacity>
-          <Text style={styles.joinedText}>Joined 2021</Text>
+          <Text style={styles.joinedText}>Joined 2025</Text>
         </View>
 
         {profileSections.map((section, sectionIndex) => (
