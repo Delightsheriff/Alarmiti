@@ -1,3 +1,4 @@
+import { QueryProvider } from "@/providers/query-provider";
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -17,8 +18,6 @@ import { useEffect } from "react";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  // useFrameworkReady();
-
   const [fontsLoaded] = useFonts({
     "Manrope-Regular": Manrope_400Regular,
     "Manrope-SemiBold": Manrope_600SemiBold,
@@ -27,10 +26,6 @@ export default function RootLayout() {
     "Inter-Medium": Inter_500Medium,
     "Inter-SemiBold": Inter_600SemiBold,
   });
-
-  // useEffect(() => {
-  //   AsyncStorage.removeItem("hasCompletedOnboarding");
-  // }, []);
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -44,14 +39,16 @@ export default function RootLayout() {
 
   return (
     <>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="onboarding" />
-        <Stack.Screen name="location" />
-        <Stack.Screen name="auth" />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="light" />
+      <QueryProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="onboarding" />
+          <Stack.Screen name="location" />
+          <Stack.Screen name="auth" />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style="light" />
+      </QueryProvider>
     </>
   );
 }
