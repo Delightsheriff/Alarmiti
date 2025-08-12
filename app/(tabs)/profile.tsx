@@ -1,6 +1,7 @@
 import CustomSafeAreaView from "@/components/custom-safe-area-view";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -15,16 +16,42 @@ import {
 export default function ProfileScreen() {
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [userLocation, setUserLocation] = useState("");
   const [profileData, setProfileData] = useState({
     firstName: "",
     lastName: "",
-    phone: "",
-    address: "",
   });
 
   // Anonymous user data
   const anonymousId = "Watcher_7429";
   const userEmail = "sophia.carter@email.com"; // This would come from auth
+
+  useEffect(() => {
+    loadUserLocation();
+  }, []);
+
+  const loadUserLocation = async () => {
+    try {
+      const location = await AsyncStorage.getItem("userLocation");
+      console.log("Loaded location from storage:", location);
+      if (location) {
+        // Check if it's a JSON string or plain string
+        try {
+          const locationData = JSON.parse(location);
+          setUserLocation(
+            locationData.address || locationData || "Location not set"
+          );
+        } catch (err) {
+          setUserLocation(location || "Location not set");
+        }
+      } else {
+        setUserLocation("Location not set");
+      }
+    } catch (error) {
+      console.error("Error loading location:", error);
+      setUserLocation("Location not available");
+    }
+  };
 
   const handleToggleAnonymity = () => {
     if (!isAnonymous && (!profileData.firstName || !profileData.lastName)) {
@@ -89,6 +116,12 @@ export default function ProfileScreen() {
 
           <Text style={styles.profileEmail}>{userEmail}</Text>
 
+          {/* Location Display */}
+          <View style={styles.locationContainer}>
+            <Ionicons name="location" size={16} color="#B0B8C4" />
+            <Text style={styles.locationText}>{userLocation}</Text>
+          </View>
+
           <View style={styles.anonymityToggle}>
             <View style={styles.toggleContent}>
               <View style={styles.toggleIcon}>
@@ -137,8 +170,8 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.sectionContent}>
-              <View style={styles.inputRow}>
-                <View style={styles.inputContainer}>
+              <View style={styles.nameRow}>
+                <View style={styles.nameInputContainer}>
                   <Text style={styles.inputLabel}>First Name</Text>
                   {isEditingProfile ? (
                     <TextInput
@@ -151,12 +184,14 @@ export default function ProfileScreen() {
                       placeholderTextColor="#B0B8C4"
                     />
                   ) : (
-                    <Text style={styles.inputValue}>
-                      {profileData.firstName || "Not set"}
-                    </Text>
+                    <View style={styles.inputDisplayContainer}>
+                      <Text style={styles.inputValue}>
+                        {profileData.firstName || "Not set"}
+                      </Text>
+                    </View>
                   )}
                 </View>
-                <View style={styles.inputContainer}>
+                <View style={styles.nameInputContainer}>
                   <Text style={styles.inputLabel}>Last Name</Text>
                   {isEditingProfile ? (
                     <TextInput
@@ -169,51 +204,24 @@ export default function ProfileScreen() {
                       placeholderTextColor="#B0B8C4"
                     />
                   ) : (
-                    <Text style={styles.inputValue}>
-                      {profileData.lastName || "Not set"}
-                    </Text>
+                    <View style={styles.inputDisplayContainer}>
+                      <Text style={styles.inputValue}>
+                        {profileData.lastName || "Not set"}
+                      </Text>
+                    </View>
                   )}
                 </View>
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Phone Number</Text>
-                {isEditingProfile ? (
-                  <TextInput
-                    style={styles.textInput}
-                    value={profileData.phone}
-                    onChangeText={(text) =>
-                      setProfileData({ ...profileData, phone: text })
-                    }
-                    placeholder="Enter phone number"
-                    placeholderTextColor="#B0B8C4"
-                    keyboardType="phone-pad"
-                  />
-                ) : (
-                  <Text style={styles.inputValue}>
-                    {profileData.phone || "Not set"}
-                  </Text>
-                )}
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Address</Text>
-                {isEditingProfile ? (
-                  <TextInput
-                    style={styles.textInput}
-                    value={profileData.address}
-                    onChangeText={(text) =>
-                      setProfileData({ ...profileData, address: text })
-                    }
-                    placeholder="Enter your address"
-                    placeholderTextColor="#B0B8C4"
-                    multiline
-                  />
-                ) : (
-                  <Text style={styles.inputValue}>
-                    {profileData.address || "Not set"}
-                  </Text>
-                )}
+              <View style={styles.locationInputGroup}>
+                <Text style={styles.inputLabel}>Current Location</Text>
+                <View style={styles.locationInputContainer}>
+                  <Ionicons name="location" size={18} color="#B0B8C4" />
+                  <Text style={styles.locationInputText}>{userLocation}</Text>
+                  <TouchableOpacity style={styles.refreshLocationButton}>
+                    <Ionicons name="refresh" size={16} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {isEditingProfile && (
@@ -233,7 +241,13 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Settings</Text>
           <View style={styles.sectionContent}>
             {settingsItems.map((item, index) => (
-              <TouchableOpacity key={index} style={styles.settingItem}>
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.settingItem,
+                  index === settingsItems.length - 1 && styles.lastSettingItem,
+                ]}
+              >
                 <View style={styles.settingLeft}>
                   <View style={styles.settingIcon}>
                     <Ionicons
@@ -272,10 +286,7 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#1A2A44",
-  },
+  // ...existing code...
   scrollView: {
     flex: 1,
   },
@@ -328,7 +339,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Inter-Regular",
     color: "#B0B8C4",
+    marginBottom: 8,
+  },
+  locationContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 24,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 8,
+    gap: 6,
+  },
+  locationText: {
+    fontSize: 14,
+    fontFamily: "Inter-Regular",
+    color: "#B0B8C4",
+    maxWidth: 200,
   },
   anonymityToggle: {
     flexDirection: "row",
@@ -403,25 +430,21 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.2)",
-    overflow: "hidden",
+    padding: 20,
   },
-  inputRow: {
+  nameRow: {
     flexDirection: "row",
-    gap: 12,
-    marginBottom: 16,
+    gap: 16,
+    marginBottom: 20,
   },
-  inputContainer: {
+  nameInputContainer: {
     flex: 1,
-  },
-  inputGroup: {
-    marginBottom: 16,
   },
   inputLabel: {
     fontSize: 14,
     fontFamily: "Inter-Medium",
     color: "#FFFFFF",
     marginBottom: 8,
-    paddingHorizontal: 16,
   },
   textInput: {
     backgroundColor: "rgba(255, 255, 255, 0.1)",
@@ -433,22 +456,54 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.2)",
-    marginHorizontal: 16,
-    minHeight: 44,
+    minHeight: 48,
+  },
+  inputDisplayContainer: {
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    minHeight: 48,
+    justifyContent: "center",
   },
   inputValue: {
     fontSize: 16,
     fontFamily: "Inter-Regular",
     color: "#FFFFFF",
+  },
+  locationInputGroup: {
+    marginBottom: 20,
+  },
+  locationInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    minHeight: 44,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    minHeight: 48,
+    gap: 12,
+  },
+  locationInputText: {
+    flex: 1,
+    fontSize: 16,
+    fontFamily: "Inter-Regular",
+    color: "#FFFFFF",
+  },
+  refreshLocationButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   saveButton: {
     backgroundColor: "#FFFFFF",
-    marginHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 16,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
@@ -466,6 +521,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255, 255, 255, 0.1)",
+  },
+  lastSettingItem: {
+    borderBottomWidth: 0,
   },
   settingLeft: {
     flexDirection: "row",
