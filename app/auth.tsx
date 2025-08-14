@@ -1,11 +1,10 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { showToast } from "@/lib/toast";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -15,6 +14,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { signInWithSupabase, signUpWithSupabase } from "../api/auth";
+import { signInSchema, signUpSchema } from "../lib/auth.schema";
 
 export default function AuthScreen() {
   const router = useRouter();
@@ -26,58 +27,55 @@ export default function AuthScreen() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
   const handleAuth = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert("Error", "Please fill in all fields.");
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      Alert.alert("Error", "Please enter a valid email address.");
-      return;
-    }
-
-    if (isSignUp && password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match.");
-      return;
-    }
-
-    if (password.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters long.");
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      // Simulate authentication API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Save authentication status
-      await AsyncStorage.setItem("isAuthenticated", "true");
-      await AsyncStorage.setItem("userEmail", email);
-
-      Alert.alert(
-        "Success",
-        isSignUp ? "Account created successfully!" : "Welcome back!"
-        // [
-        //   {
-        //     text: "OK",
-        //     onPress: () => {
-        //       // Navigate to main app (for now, stay here)
-        //       console.log("User authenticated successfully");
-        //     },
-        //   },
-        // ]
-      );
-      router.replace("/(tabs)");
+      if (isSignUp) {
+        const result = signUpSchema.safeParse({
+          email,
+          password,
+          confirmPassword,
+        });
+        if (!result.success) {
+          // Show all Zod errors, not just the first one
+          result.error.issues.forEach((issue) => {
+            showToast("error", issue.message);
+          });
+          setIsLoading(false);
+          return;
+        }
+        const res = await signUpWithSupabase(email, password);
+        if (res.success) {
+          showToast("success", "Account created successfully!");
+          setIsSignUp(false); // Switch to Sign In tab
+          setPassword("");
+          setConfirmPassword("");
+        } else {
+          showToast("error", "Sign up failed. Please try again.");
+        }
+      } else {
+        const result = signInSchema.safeParse({ email, password });
+        if (!result.success) {
+          // Show all Zod errors, not just the first one
+          result.error.issues.forEach((issue) => {
+            showToast("error", issue.message);
+          });
+          setIsLoading(false);
+          return;
+        }
+        const res = await signInWithSupabase(email, password);
+        if (res.success) {
+          await AsyncStorage.setItem("isAuthenticated", "true");
+          await AsyncStorage.setItem("userEmail", email);
+          showToast("success", "Welcome back!");
+          router.replace("/(tabs)");
+        } else {
+          showToast("error", "Sign in failed. Please try again.");
+        }
+      }
     } catch (error) {
-      Alert.alert("Error", "Authentication failed. Please try again.");
+      showToast("error", "Authentication failed. Please try again.");
       console.error("Auth error:", error);
     } finally {
       setIsLoading(false);
@@ -222,12 +220,6 @@ export default function AuthScreen() {
               </Text>
             )}
           </TouchableOpacity>
-
-          {!isSignUp && (
-            <TouchableOpacity style={styles.forgotPasswordButton}>
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
-          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

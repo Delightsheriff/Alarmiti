@@ -40,22 +40,6 @@ export default function OnboardingScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  //TODO: REMOVE THIS LATER
-  // Clear AsyncStorage for testing purposes
-  // useEffect(() => {
-  //   const clearStorageForTesting = async () => {
-  //     try {
-  //       await AsyncStorage.removeItem("hasCompletedOnboarding");
-  //       console.log("AsyncStorage cleared for testing");
-  //     } catch (error) {
-  //       console.error("Error clearing AsyncStorage:", error);
-  //     }
-  //   };
-
-  //   // Uncomment the line below to clear storage on component mount
-  //   clearStorageForTesting();
-  // }, []);
-
   const handleGetStarted = async () => {
     try {
       await AsyncStorage.setItem("hasCompletedOnboarding", "true");

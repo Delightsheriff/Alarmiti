@@ -10,10 +10,12 @@ import {
   Manrope_700Bold,
   useFonts,
 } from "@expo-google-fonts/manrope";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import Toast from "react-native-toast-message";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,6 +28,22 @@ export default function RootLayout() {
     "Inter-Medium": Inter_500Medium,
     "Inter-SemiBold": Inter_600SemiBold,
   });
+  // TODO: REMOVE THIS LATER
+  // Clear AsyncStorage for testing purposes
+  useEffect(() => {
+    const clearStorageForTesting = async () => {
+      try {
+        await AsyncStorage.removeItem("hasCompletedOnboarding");
+        await AsyncStorage.removeItem("userLoation");
+        console.log("AsyncStorage cleared for testing");
+      } catch (error) {
+        console.error("Error clearing AsyncStorage:", error);
+      }
+    };
+
+    // Uncomment the line below to clear storage on component mount
+    clearStorageForTesting();
+  }, []);
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -39,6 +57,7 @@ export default function RootLayout() {
 
   return (
     <>
+      <Toast />
       <QueryProvider>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
