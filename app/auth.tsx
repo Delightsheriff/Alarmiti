@@ -1,6 +1,5 @@
 import { showToast } from "@/lib/toast";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -14,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { ZodIssue } from "zod";
 import { signInWithSupabase, signUpWithSupabase } from "../api/auth";
 import { signInSchema, signUpSchema } from "../lib/auth.schema";
 
@@ -26,9 +26,11 @@ export default function AuthScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string[] }>({});
 
   const handleAuth = async () => {
     setIsLoading(true);
+    setFormErrors({}); // Clear previous errors
 
     try {
       if (isSignUp) {
@@ -38,10 +40,14 @@ export default function AuthScreen() {
           confirmPassword,
         });
         if (!result.success) {
-          // Show all Zod errors, not just the first one
-          result.error.issues.forEach((issue) => {
-            showToast("error", issue.message);
+          // Map Zod issues to fields
+          const errors: { [key: string]: string[] } = {};
+          result.error.issues.forEach((issue: ZodIssue) => {
+            const field = issue.path[0] as string;
+            if (!errors[field]) errors[field] = [];
+            errors[field].push(issue.message);
           });
+          setFormErrors(errors);
           setIsLoading(false);
           return;
         }
@@ -57,17 +63,18 @@ export default function AuthScreen() {
       } else {
         const result = signInSchema.safeParse({ email, password });
         if (!result.success) {
-          // Show all Zod errors, not just the first one
-          result.error.issues.forEach((issue) => {
-            showToast("error", issue.message);
+          const errors: { [key: string]: string[] } = {};
+          result.error.issues.forEach((issue: ZodIssue) => {
+            const field = issue.path[0] as string;
+            if (!errors[field]) errors[field] = [];
+            errors[field].push(issue.message);
           });
+          setFormErrors(errors);
           setIsLoading(false);
           return;
         }
         const res = await signInWithSupabase(email, password);
         if (res.success) {
-          await AsyncStorage.setItem("isAuthenticated", "true");
-          await AsyncStorage.setItem("userEmail", email);
           showToast("success", "Welcome back!");
           router.replace("/(tabs)");
         } else {
@@ -151,6 +158,12 @@ export default function AuthScreen() {
               autoCapitalize="none"
               autoCorrect={false}
             />
+            {formErrors.email &&
+              formErrors.email.map((msg, idx) => (
+                <Text key={idx} style={styles.errorText}>
+                  {msg}
+                </Text>
+              ))}
           </View>
 
           <View style={styles.inputContainer}>
@@ -177,6 +190,12 @@ export default function AuthScreen() {
                 )}
               </TouchableOpacity>
             </View>
+            {formErrors.password &&
+              formErrors.password.map((msg, idx) => (
+                <Text key={idx} style={styles.errorText}>
+                  {msg}
+                </Text>
+              ))}
           </View>
 
           {isSignUp && (
@@ -204,6 +223,12 @@ export default function AuthScreen() {
                   )}
                 </TouchableOpacity>
               </View>
+              {formErrors.confirmPassword &&
+                formErrors.confirmPassword.map((msg, idx) => (
+                  <Text key={idx} style={styles.errorText}>
+                    {msg}
+                  </Text>
+                ))}
             </View>
           )}
 
@@ -371,5 +396,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Inter-Medium",
     color: "#B0B8C4",
+  },
+  errorText: {
+    color: "#FF4D4F",
+    fontSize: 14,
+    marginTop: 4,
+    fontFamily: "Inter-Regular",
   },
 });
