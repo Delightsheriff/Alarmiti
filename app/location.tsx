@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -106,6 +105,7 @@ export default function LocationScreen() {
 
     try {
       await AsyncStorage.setItem("userLocation", selectedLocation);
+      console.log(selectedLocation);
       router.replace("/auth");
     } catch (error) {
       console.error("Error saving location:", error);
@@ -131,81 +131,87 @@ export default function LocationScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <Feather name="map-pin" size={48} color="#FFFFFF" />
-            </View>
-            <Text style={styles.title}>What&apos;s your location?</Text>
-            <Text style={styles.subtitle}>
-              Help us connect you with your neighborhood watch community.
-            </Text>
-          </View>
-
-          <View style={styles.searchContainer}>
-            <View style={styles.searchInputContainer}>
-              <Feather name="search" size={18} color="#B0B8C4" />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search for your neighborhood"
-                placeholderTextColor="#B0B8C4"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                autoCapitalize="words"
-                autoCorrect={false}
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity
-                  style={styles.clearButton}
-                  onPress={clearSearch}
-                >
-                  <Feather name="x" size={18} color="#B0B8C4" />
-                </TouchableOpacity>
-              )}
-              {isLoading && <ActivityIndicator size="small" color="#B0B8C4" />}
-            </View>
-
-            {suggestions.length > 0 && (
-              <View style={styles.suggestionsContainer}>
-                <FlatList
-                  data={suggestions}
-                  keyExtractor={(item) => item.place_id}
-                  renderItem={renderSuggestion}
-                  style={styles.suggestionsList}
-                  nestedScrollEnabled
-                  showsVerticalScrollIndicator={false}
-                />
+        <FlatList
+          data={[{ key: "main" }]}
+          renderItem={() => (
+            <View>
+              <View style={styles.header}>
+                <View style={styles.iconContainer}>
+                  <Feather name="map-pin" size={48} color="#FFFFFF" />
+                </View>
+                <Text style={styles.title}>What&apos;s your location?</Text>
+                <Text style={styles.subtitle}>
+                  Help us connect you with your neighborhood watch community.
+                </Text>
               </View>
-            )}
-          </View>
 
-          <View style={styles.infoContainer}>
-            <Text style={styles.infoTitle}>Why do we need your location?</Text>
-            <View style={styles.infoList}>
-              <Text style={styles.infoItem}>
-                • Connect you with nearby neighbors
-              </Text>
-              <Text style={styles.infoItem}>
-                • Show relevant local incidents
-              </Text>
-              <Text style={styles.infoItem}>
-                • Enable location-based alerts
-              </Text>
-              <Text style={styles.infoItem}>
-                • Help emergency services if needed
-              </Text>
+              <View style={styles.searchContainer}>
+                <View style={styles.searchInputContainer}>
+                  <Feather name="search" size={18} color="#B0B8C4" />
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search for your neighborhood"
+                    placeholderTextColor="#B0B8C4"
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                  />
+                  {searchQuery.length > 0 && (
+                    <TouchableOpacity
+                      style={styles.clearButton}
+                      onPress={clearSearch}
+                    >
+                      <Feather name="x" size={18} color="#B0B8C4" />
+                    </TouchableOpacity>
+                  )}
+                  {isLoading && (
+                    <ActivityIndicator size="small" color="#B0B8C4" />
+                  )}
+                </View>
+
+                {suggestions.length > 0 && (
+                  <View style={styles.suggestionsContainer}>
+                    <FlatList
+                      data={suggestions}
+                      keyExtractor={(item) => item.place_id}
+                      renderItem={renderSuggestion}
+                      style={styles.suggestionsList}
+                      nestedScrollEnabled
+                      showsVerticalScrollIndicator={false}
+                    />
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.infoContainer}>
+                <Text style={styles.infoTitle}>
+                  Why do we need your location?
+                </Text>
+                <View style={styles.infoList}>
+                  <Text style={styles.infoItem}>
+                    • Connect you with nearby neighbors
+                  </Text>
+                  <Text style={styles.infoItem}>
+                    • Show relevant local incidents
+                  </Text>
+                  <Text style={styles.infoItem}>
+                    • Enable location-based alerts
+                  </Text>
+                  <Text style={styles.infoItem}>
+                    • Help emergency services if needed
+                  </Text>
+                </View>
+                <Text style={styles.privacyNote}>
+                  Your exact location is kept private and secure. Only general
+                  area information is shared with the community.
+                </Text>
+              </View>
             </View>
-            <Text style={styles.privacyNote}>
-              Your exact location is kept private and secure. Only general area
-              information is shared with the community.
-            </Text>
-          </View>
-        </ScrollView>
+          )}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        />
 
         <View style={styles.bottomSection}>
           <TouchableOpacity
@@ -238,7 +244,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 48,
     paddingBottom: 20,
   },
   header: {
