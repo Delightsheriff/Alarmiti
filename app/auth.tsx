@@ -73,17 +73,18 @@ export default function AuthScreen() {
       });
 
       if (error) {
+        console.log(error);
         showToast(
           "error",
           error.message || "Sign up failed. Please try again."
         );
         console.error("Sign up error:", error);
       } else {
+        setIsSignUp(false);
         showToast(
           "success",
           "Account created successfully! Please check your email to verify your account."
         );
-        setIsSignUp(false);
       }
     } catch (error) {
       showToast("error", "Sign up failed. Please try again.");
@@ -114,11 +115,11 @@ export default function AuthScreen() {
     }
   };
 
-  const onSubmit = (data: any) => {
+  const onSubmit = async (data: any) => {
     if (isSignUp) {
-      signUp(data as SignUpInput);
+      await signUp(data as SignUpInput);
     } else {
-      signIn(data as SignInInput);
+      await signIn(data as SignInInput);
     }
   };
 

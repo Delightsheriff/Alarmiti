@@ -1,3 +1,4 @@
+import AuthProvider from "@/providers/auth-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import {
   Inter_400Regular,
@@ -10,7 +11,6 @@ import {
   Manrope_700Bold,
   useFonts,
 } from "@expo-google-fonts/manrope";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -30,20 +30,20 @@ export default function RootLayout() {
   });
   // TODO: REMOVE THIS LATER
   // Clear AsyncStorage for testing purposes
-  useEffect(() => {
-    const clearStorageForTesting = async () => {
-      try {
-        await AsyncStorage.removeItem("hasCompletedOnboarding");
-        await AsyncStorage.removeItem("userLoation");
-        console.log("AsyncStorage cleared for testing");
-      } catch (error) {
-        console.error("Error clearing AsyncStorage:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const clearStorageForTesting = async () => {
+  //     try {
+  //       await AsyncStorage.removeItem("hasCompletedOnboarding");
+  //       await AsyncStorage.removeItem("userLoation");
+  //       console.log("AsyncStorage cleared for testing");
+  //     } catch (error) {
+  //       console.error("Error clearing AsyncStorage:", error);
+  //     }
+  //   };
 
-    // Uncomment the line below to clear storage on component mount
-    clearStorageForTesting();
-  }, []);
+  //   // Uncomment the line below to clear storage on component mount
+  //   clearStorageForTesting();
+  // }, []);
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -57,17 +57,19 @@ export default function RootLayout() {
 
   return (
     <>
+      <AuthProvider>
+        <QueryProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="onboarding" />
+            <Stack.Screen name="location" />
+            <Stack.Screen name="auth" />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <StatusBar style="light" />
+        </QueryProvider>
+      </AuthProvider>
       <Toast />
-      <QueryProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="onboarding" />
-          <Stack.Screen name="location" />
-          <Stack.Screen name="auth" />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <StatusBar style="light" />
-      </QueryProvider>
     </>
   );
 }
