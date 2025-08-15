@@ -1,7 +1,9 @@
+import { supabase } from "@/lib/supabase";
 import { showToast } from "@/lib/toast";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -13,80 +15,107 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { ZodIssue } from "zod";
-import { signInWithSupabase, signUpWithSupabase } from "../api/auth";
-import { signInSchema, signUpSchema } from "../lib/auth.schema";
+import {
+  SignInInput,
+  signInSchema,
+  SignUpInput,
+  signUpSchema,
+} from "../lib/auth.schema";
 
 export default function AuthScreen() {
-  const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [formErrors, setFormErrors] = useState<{ [key: string]: string[] }>({});
 
-  const handleAuth = async () => {
-    setIsLoading(true);
-    setFormErrors({}); // Clear previous errors
+  const { control, handleSubmit, formState, reset } = useForm({
+    resolver: zodResolver(isSignUp ? signUpSchema : signInSchema),
+    defaultValues: isSignUp
+      ? {
+          email: "",
+          password: "",
+          confirmPassword: "",
+        }
+      : {
+          email: "",
+          password: "",
+        },
+  });
 
+  // Reset form when switching between sign up and sign in
+  useEffect(() => {
+    const defaultValues = isSignUp
+      ? {
+          email: "",
+          password: "",
+          confirmPassword: "",
+        }
+      : {
+          email: "",
+          password: "",
+        };
+
+    reset(defaultValues);
+  }, [isSignUp, reset]);
+
+  const signUp = async (data: SignUpInput) => {
     try {
-      if (isSignUp) {
-        const result = signUpSchema.safeParse({
-          email,
-          password,
-          confirmPassword,
-        });
-        if (!result.success) {
-          // Map Zod issues to fields
-          const errors: { [key: string]: string[] } = {};
-          result.error.issues.forEach((issue: ZodIssue) => {
-            const field = issue.path[0] as string;
-            if (!errors[field]) errors[field] = [];
-            errors[field].push(issue.message);
-          });
-          setFormErrors(errors);
-          setIsLoading(false);
-          return;
-        }
-        const res = await signUpWithSupabase(email, password);
-        if (res.success) {
-          showToast("success", "Account created successfully!");
-          setIsSignUp(false); // Switch to Sign In tab
-          setPassword("");
-          setConfirmPassword("");
-        } else {
-          showToast("error", "Sign up failed. Please try again.");
-        }
+      const { error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (error) {
+        showToast(
+          "error",
+          error.message || "Sign up failed. Please try again."
+        );
+        console.error("Sign up error:", error);
       } else {
-        const result = signInSchema.safeParse({ email, password });
-        if (!result.success) {
-          const errors: { [key: string]: string[] } = {};
-          result.error.issues.forEach((issue: ZodIssue) => {
-            const field = issue.path[0] as string;
-            if (!errors[field]) errors[field] = [];
-            errors[field].push(issue.message);
-          });
-          setFormErrors(errors);
-          setIsLoading(false);
-          return;
-        }
-        const res = await signInWithSupabase(email, password);
-        if (res.success) {
-          showToast("success", "Welcome back!");
-          router.replace("/(tabs)");
-        } else {
-          showToast("error", "Sign in failed. Please try again.");
-        }
+        showToast(
+          "success",
+          "Account created successfully! Please check your email to verify your account."
+        );
       }
     } catch (error) {
-      showToast("error", "Authentication failed. Please try again.");
-      console.error("Auth error:", error);
-    } finally {
-      setIsLoading(false);
+      showToast("error", "Sign up failed. Please try again.");
+      console.error("Sign up error:", error);
     }
+  };
+
+  const signIn = async (data: SignInInput) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (error) {
+        showToast(
+          "error",
+          error.message || "Sign in failed. Please try again."
+        );
+        console.error("Sign in error:", error);
+      } else {
+        showToast("success", "Welcome back!");
+      }
+    } catch (error) {
+      showToast("error", "Sign in failed. Please try again.");
+      console.error("Sign in error:", error);
+    }
+  };
+
+  const onSubmit = (data: any) => {
+    if (isSignUp) {
+      signUp(data as SignUpInput);
+    } else {
+      signIn(data as SignInInput);
+    }
+  };
+
+  const handleModeSwitch = (newMode: boolean) => {
+    setIsSignUp(newMode);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
   };
 
   return (
@@ -120,7 +149,7 @@ export default function AuthScreen() {
                 styles.toggleButton,
                 isSignUp && styles.toggleButtonActive,
               ]}
-              onPress={() => setIsSignUp(true)}
+              onPress={() => handleModeSwitch(true)}
             >
               <Text
                 style={[styles.toggleText, isSignUp && styles.toggleTextActive]}
@@ -133,7 +162,7 @@ export default function AuthScreen() {
                 styles.toggleButton,
                 !isSignUp && styles.toggleButtonActive,
               ]}
-              onPress={() => setIsSignUp(false)}
+              onPress={() => handleModeSwitch(false)}
             >
               <Text
                 style={[
@@ -148,37 +177,60 @@ export default function AuthScreen() {
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email Address</Text>
-            <TextInput
-              style={styles.textInput}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Enter your email"
-              placeholderTextColor="#B0B8C4"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
+
+            <Controller
+              control={control}
+              name="email"
+              render={({
+                field: { onChange, onBlur, value },
+                fieldState: { error },
+              }) => (
+                <>
+                  <TextInput
+                    style={styles.textInput}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    value={value}
+                    placeholder="Enter your email"
+                    placeholderTextColor="#B0B8C4"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  {error && (
+                    <Text style={styles.errorText}>{error.message}</Text>
+                  )}
+                </>
+              )}
             />
-            {formErrors.email &&
-              formErrors.email.map((msg, idx) => (
-                <Text key={idx} style={styles.errorText}>
-                  {msg}
-                </Text>
-              ))}
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Password</Text>
             <View style={styles.passwordContainer}>
-              <TextInput
-                style={styles.passwordInput}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Enter your password"
-                placeholderTextColor="#B0B8C4"
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoCorrect={false}
+              <Controller
+                control={control}
+                name="password"
+                render={({
+                  field: { onChange, onBlur, value },
+                  fieldState: { error },
+                }) => (
+                  <>
+                    <TextInput
+                      style={styles.passwordInput}
+                      value={value}
+                      placeholderTextColor="#B0B8C4"
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      placeholder="Enter your password"
+                    />
+                  </>
+                )}
               />
+
               <TouchableOpacity
                 style={styles.eyeButton}
                 onPress={() => setShowPassword(!showPassword)}
@@ -190,28 +242,47 @@ export default function AuthScreen() {
                 )}
               </TouchableOpacity>
             </View>
-            {formErrors.password &&
-              formErrors.password.map((msg, idx) => (
-                <Text key={idx} style={styles.errorText}>
-                  {msg}
-                </Text>
-              ))}
+            {/* Error message below input */}
+            <Controller
+              control={control}
+              name="password"
+              render={({ fieldState: { error } }) => (
+                <>
+                  {error && (
+                    <Text style={styles.errorText}>{error.message}</Text>
+                  )}
+                </>
+              )}
+            />
           </View>
 
           {isSignUp && (
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Confirm Password</Text>
               <View style={styles.passwordContainer}>
-                <TextInput
-                  style={styles.passwordInput}
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  placeholder="Confirm your password"
-                  placeholderTextColor="#B0B8C4"
-                  secureTextEntry={!showConfirmPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
+                <Controller
+                  control={control}
+                  name="confirmPassword"
+                  render={({
+                    field: { onChange, onBlur, value },
+                    fieldState: { error },
+                  }) => (
+                    <>
+                      <TextInput
+                        style={styles.passwordInput}
+                        value={value}
+                        onChangeText={onChange}
+                        onBlur={onBlur}
+                        placeholder="Confirm your password"
+                        placeholderTextColor="#B0B8C4"
+                        secureTextEntry={!showConfirmPassword}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                      />
+                    </>
+                  )}
                 />
+
                 <TouchableOpacity
                   style={styles.eyeButton}
                   onPress={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -223,21 +294,30 @@ export default function AuthScreen() {
                   )}
                 </TouchableOpacity>
               </View>
-              {formErrors.confirmPassword &&
-                formErrors.confirmPassword.map((msg, idx) => (
-                  <Text key={idx} style={styles.errorText}>
-                    {msg}
-                  </Text>
-                ))}
+              {/* Error message below input */}
+              <Controller
+                control={control}
+                name="confirmPassword"
+                render={({ fieldState: { error } }) => (
+                  <>
+                    {error && (
+                      <Text style={styles.errorText}>{error.message}</Text>
+                    )}
+                  </>
+                )}
+              />
             </View>
           )}
 
           <TouchableOpacity
-            style={[styles.authButton, isLoading && styles.buttonDisabled]}
-            onPress={handleAuth}
-            disabled={isLoading}
+            style={[
+              styles.authButton,
+              formState.isSubmitting && styles.buttonDisabled,
+            ]}
+            onPress={handleSubmit(onSubmit)}
+            disabled={formState.isSubmitting}
           >
-            {isLoading ? (
+            {formState.isSubmitting ? (
               <ActivityIndicator size="small" color="#1A2A44" />
             ) : (
               <Text style={styles.authButtonText}>
