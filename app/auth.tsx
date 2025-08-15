@@ -1,7 +1,10 @@
+import { saveRegionToProfile } from "@/api/region";
 import { supabase } from "@/lib/supabase";
 import { showToast } from "@/lib/toast";
+import { useAuth } from "@/providers/auth-provider";
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
@@ -23,6 +26,7 @@ import {
 } from "../lib/auth.schema";
 
 export default function AuthScreen() {
+  const { session } = useAuth();
   const [isSignUp, setIsSignUp] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -57,6 +61,10 @@ export default function AuthScreen() {
     reset(defaultValues);
   }, [isSignUp, reset]);
 
+  if (session) {
+    return <Redirect href="/(tabs)" />;
+  }
+
   const signUp = async (data: SignUpInput) => {
     try {
       const { error } = await supabase.auth.signUp({
@@ -75,6 +83,7 @@ export default function AuthScreen() {
           "success",
           "Account created successfully! Please check your email to verify your account."
         );
+        setIsSignUp(false);
       }
     } catch (error) {
       showToast("error", "Sign up failed. Please try again.");
@@ -96,6 +105,7 @@ export default function AuthScreen() {
         );
         console.error("Sign in error:", error);
       } else {
+        saveRegionToProfile();
         showToast("success", "Welcome back!");
       }
     } catch (error) {
