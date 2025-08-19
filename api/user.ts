@@ -10,7 +10,9 @@ export const fetchProfile = async () => {
 
   const { data, error } = await supabase
     .from("users")
-    .select("*")
+    .select(
+      "id, first_name, last_name, username, is_anonymous, region, avatar_url, anon_avatar_url, created_at"
+    )
     .eq("id", user.id)
     .single();
   if (error) throw error;
@@ -32,7 +34,9 @@ export const updateProfileName = async (
     .from("users")
     .update({ first_name: firstName, last_name: lastName })
     .eq("id", user.id)
-    .select()
+    .select(
+      "id, first_name, last_name, username, is_anonymous, region, avatar_url, anon_avatar_url, created_at"
+    )
     .single();
   if (error) throw error;
   return data;
@@ -79,7 +83,29 @@ export const updateAvatar = async ({
     .from("users")
     .update({ avatar_url: publicUrl })
     .eq("id", user.id)
-    .select()
+    .select(
+      "id, first_name, last_name, username, is_anonymous, region, avatar_url, anon_avatar_url, created_at"
+    )
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+export const toggleAnonymous = async (isAnonymous: boolean) => {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError) throw userError;
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("users")
+    .update({ is_anonymous: isAnonymous })
+    .eq("id", user.id)
+    .select(
+      "id, first_name, last_name, username, is_anonymous, region, avatar_url, anon_avatar_url, created_at"
+    )
     .single();
   if (error) throw error;
   return data;

@@ -4,6 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import {
   Alert,
+  Image,
   ScrollView,
   StyleSheet,
   Switch,
@@ -13,8 +14,18 @@ import {
   View,
 } from "react-native";
 
+import {
+  useToggleAnonymous,
+  useUpdateProfileName,
+  useUser,
+} from "@/hooks/useUser";
+import { useAuth } from "@/providers/auth-provider";
+
 export default function ProfileScreen() {
-  const [isAnonymous, setIsAnonymous] = useState(true);
+  const { user, isLoading } = useUser();
+  const { session } = useAuth();
+  const toggleAnonymousMutation = useToggleAnonymous();
+  const updateNameMutation = useUpdateProfileName();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [userLocation, setUserLocation] = useState("");
   const [profileData, setProfileData] = useState({
@@ -22,13 +33,22 @@ export default function ProfileScreen() {
     lastName: "",
   });
 
-  // Anonymous user data
-  const anonymousId = "Watcher_7429";
-  const userEmail = "sophia.carter@email.com"; // This would come from auth
+  const isAnonymous = user?.is_anonymous ?? true;
+  const anonymousId = user?.username || "";
+  const userEmail = session?.user?.email || "";
 
   useEffect(() => {
     loadUserLocation();
   }, []);
+
+  useEffect(() => {
+    if (user && !isEditingProfile) {
+      setProfileData({
+        firstName: user.first_name || "",
+        lastName: user.last_name || "",
+      });
+    }
+  }, [user, isEditingProfile]);
 
   const loadUserLocation = async () => {
     try {
@@ -62,7 +82,7 @@ export default function ProfileScreen() {
       );
       return;
     }
-    setIsAnonymous(!isAnonymous);
+    toggleAnonymousMutation.mutate(!isAnonymous);
     setIsEditingProfile(false);
   };
 
@@ -71,8 +91,21 @@ export default function ProfileScreen() {
       Alert.alert("Error", "First name and last name are required.");
       return;
     }
-    setIsEditingProfile(false);
-    Alert.alert("Success", "Profile updated successfully!");
+    updateNameMutation.mutate(
+      {
+        firstName: profileData.firstName.trim(),
+        lastName: profileData.lastName.trim(),
+      },
+      {
+        onSuccess: () => {
+          setIsEditingProfile(false);
+          Alert.alert("Success", "Profile updated successfully!");
+        },
+        onError: (e: any) => {
+          Alert.alert("Error", e?.message || "Failed to update profile");
+        },
+      }
+    );
   };
 
   const settingsItems = [
@@ -98,7 +131,19 @@ export default function ProfileScreen() {
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
               {isAnonymous ? (
-                <Ionicons name="shield" size={32} color="#1A2A44" />
+                user?.anon_avatar_url ? (
+                  <Image
+                    source={{ uri: user.anon_avatar_url }}
+                    style={{ width: 80, height: 80, borderRadius: 40 }}
+                  />
+                ) : (
+                  <Ionicons name="shield" size={32} color="#1A2A44" />
+                )
+              ) : user?.avatar_url ? (
+                <Image
+                  source={{ uri: user.avatar_url }}
+                  style={{ width: 80, height: 80, borderRadius: 40 }}
+                />
               ) : (
                 <Ionicons name="person" size={32} color="#1A2A44" />
               )}

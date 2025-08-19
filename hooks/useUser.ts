@@ -1,5 +1,6 @@
 import {
   fetchProfile,
+  toggleAnonymous,
   updateAvatar,
   updateProfileName,
   type AvatarUploadInput,
@@ -35,6 +36,16 @@ export function useUpdateAvatar() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (file: AvatarUploadInput) => updateAvatar(file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+    },
+  });
+}
+
+export function useToggleAnonymous() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (isAnonymous: boolean) => toggleAnonymous(isAnonymous),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user"] });
     },
