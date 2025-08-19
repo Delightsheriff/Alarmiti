@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SvgUri } from "react-native-svg";
 
 import {
   useToggleAnonymous,
@@ -21,11 +22,14 @@ import {
   useUpdateProfileName,
   useUser,
 } from "@/hooks/useUser";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/providers/auth-provider";
+import { useRouter } from "expo-router";
 
 export default function ProfileScreen() {
   const { user } = useUser();
   const { session } = useAuth();
+  const router = useRouter();
   const toggleAnonymousMutation = useToggleAnonymous();
   const updateNameMutation = useUpdateProfileName();
   const updateAvatarMutation = useUpdateAvatar();
@@ -117,13 +121,14 @@ export default function ProfileScreen() {
     );
   };
 
-  const settingsItems = [
-    { icon: "notifications", label: "Notifications", hasChevron: true },
-    { icon: "shield-checkmark", label: "Privacy & Safety", hasChevron: true },
-    { icon: "lock-closed", label: "Security", hasChevron: true },
-    { icon: "globe", label: "Language", value: "English", hasChevron: true },
-    { icon: "help-circle", label: "Help & Support", hasChevron: true },
-  ];
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      router.replace("/auth");
+    } catch (e: any) {
+      Alert.alert("Logout failed", e?.message || "Please try again");
+    }
+  };
 
   return (
     <CustomSafeAreaView>
@@ -141,10 +146,14 @@ export default function ProfileScreen() {
             <View style={styles.avatar}>
               {isAnonymous ? (
                 user?.anon_avatar_url ? (
-                  <Image
-                    source={{ uri: user.anon_avatar_url }}
-                    style={{ width: 80, height: 80, borderRadius: 40 }}
-                  />
+                  user.anon_avatar_url.includes("/svg") ? (
+                    <SvgUri uri={user.anon_avatar_url} width={80} height={80} />
+                  ) : (
+                    <Image
+                      source={{ uri: user.anon_avatar_url }}
+                      style={{ width: 80, height: 80, borderRadius: 40 }}
+                    />
+                  )
                 ) : (
                   <Ionicons name="shield" size={32} color="#1A2A44" />
                 )
@@ -183,7 +192,7 @@ export default function ProfileScreen() {
               : "Complete Your Profile"}
           </Text>
 
-          <Text style={styles.profileEmail}>{userEmail}</Text>
+          {!isAnonymous && <Text style={styles.profileEmail}>{userEmail}</Text>}
 
           {/* Location Display */}
           <View style={styles.locationContainer}>
@@ -306,41 +315,6 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* Settings Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Settings</Text>
-          <View style={styles.sectionContent}>
-            {settingsItems.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.settingItem,
-                  index === settingsItems.length - 1 && styles.lastSettingItem,
-                ]}
-              >
-                <View style={styles.settingLeft}>
-                  <View style={styles.settingIcon}>
-                    <Ionicons
-                      name={item.icon as any}
-                      size={20}
-                      color="#1A2A44"
-                    />
-                  </View>
-                  <View style={styles.settingContent}>
-                    <Text style={styles.settingLabel}>{item.label}</Text>
-                    {item.value && (
-                      <Text style={styles.settingValue}>{item.value}</Text>
-                    )}
-                  </View>
-                </View>
-                {item.hasChevron && (
-                  <Ionicons name="chevron-forward" size={20} color="#B0B8C4" />
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
         {/* Privacy Notice */}
         <View style={styles.privacyNotice}>
           <Ionicons name="shield-checkmark" size={16} color="#B0B8C4" />
@@ -351,6 +325,11 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </ScrollView>
+      <View style={styles.bottomSection}>
+        <TouchableOpacity style={styles.saveButton} onPress={handleLogout}>
+          <Text style={styles.saveButtonText}>Log Out</Text>
+        </TouchableOpacity>
+      </View>
     </CustomSafeAreaView>
   );
 }
@@ -359,6 +338,9 @@ const styles = StyleSheet.create({
   // ...existing code...
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100,
   },
   header: {
     paddingHorizontal: 24,
@@ -384,8 +366,11 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    borderColor: "#B0B8C4",
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
   anonymousBadge: {
     position: "absolute",
@@ -598,6 +583,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Inter-SemiBold",
     color: "#1A2A44",
+  },
+  bottomSection: {
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "#1A2A44",
   },
   settingItem: {
     flexDirection: "row",
