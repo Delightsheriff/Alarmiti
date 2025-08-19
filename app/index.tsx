@@ -1,3 +1,4 @@
+import { useAuth } from "@/providers/auth-provider";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -6,37 +7,34 @@ import { StyleSheet, View } from "react-native";
 export default function InitialScreen() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const { session, mounting } = useAuth();
 
   useEffect(() => {
-    checkUserStatus();
-  }, []);
+    const checkUserStatus = async () => {
+      if (mounting) return; // wait for auth state to resolve
 
-  const checkUserStatus = async () => {
-    try {
-      // Check if user has completed onboarding
-      const hasCompletedOnboarding = await AsyncStorage.getItem(
-        "hasCompletedOnboarding"
-      );
+      try {
+        const hasCompletedOnboarding = await AsyncStorage.getItem(
+          "hasCompletedOnboarding"
+        );
 
-      // Check if user is authenticated (we'll implement this later)
-      const isAuthenticated = await AsyncStorage.getItem("isAuthenticated");
-
-      if (!hasCompletedOnboarding) {
+        if (!hasCompletedOnboarding) {
+          router.replace("/onboarding");
+        } else if (!session) {
+          router.replace("/auth");
+        } else {
+          router.replace("/(tabs)");
+        }
+      } catch (error) {
+        console.error("Error checking user status:", error);
         router.replace("/onboarding");
-      } else if (!isAuthenticated) {
-        router.replace("/auth");
-      } else {
-        // User is authenticated, go to main app (we'll add this later)
-        router.replace("/(tabs)");
-        // router.replace("/auth"); // For now, redirect to auth
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error checking user status:", error);
-      router.replace("/onboarding");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    checkUserStatus();
+  }, [mounting, session, router]);
 
   if (isLoading) {
     return <View style={styles.container} />;

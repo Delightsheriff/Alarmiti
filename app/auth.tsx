@@ -80,6 +80,7 @@ export default function AuthScreen() {
         );
         console.error("Sign up error:", error);
       } else {
+        saveRegionToProfile();
         setIsSignUp(false);
         showToast(
           "success",
