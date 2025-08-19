@@ -1,4 +1,9 @@
-import { fetchProfile, updateAvatar, updateProfileName } from "@/api/user";
+import {
+  fetchProfile,
+  updateAvatar,
+  updateProfileName,
+  type AvatarUploadInput,
+} from "@/api/user";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export function useUser() {
@@ -29,7 +34,7 @@ export function useUpdateProfileName() {
 export function useUpdateAvatar() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (avatarUrl: string) => updateAvatar(avatarUrl),
+    mutationFn: (file: AvatarUploadInput) => updateAvatar(file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user"] });
     },
