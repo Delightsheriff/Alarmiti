@@ -1,6 +1,7 @@
 import CustomSafeAreaView from "@/components/custom-safe-area-view";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from "expo-image-picker";
+
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -16,18 +17,20 @@ import {
 
 import {
   useToggleAnonymous,
+  useUpdateAvatar,
   useUpdateProfileName,
   useUser,
 } from "@/hooks/useUser";
 import { useAuth } from "@/providers/auth-provider";
 
 export default function ProfileScreen() {
-  const { user, isLoading } = useUser();
+  const { user } = useUser();
   const { session } = useAuth();
   const toggleAnonymousMutation = useToggleAnonymous();
   const updateNameMutation = useUpdateProfileName();
+  const updateAvatarMutation = useUpdateAvatar();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [userLocation, setUserLocation] = useState("");
+
   const [profileData, setProfileData] = useState({
     firstName: "",
     lastName: "",
@@ -38,10 +41,6 @@ export default function ProfileScreen() {
   const userEmail = session?.user?.email || "";
 
   useEffect(() => {
-    loadUserLocation();
-  }, []);
-
-  useEffect(() => {
     if (user && !isEditingProfile) {
       setProfileData({
         firstName: user.first_name || "",
@@ -49,29 +48,6 @@ export default function ProfileScreen() {
       });
     }
   }, [user, isEditingProfile]);
-
-  const loadUserLocation = async () => {
-    try {
-      const location = await AsyncStorage.getItem("userLocation");
-      console.log("Loaded location from storage:", location);
-      if (location) {
-        // Check if it's a JSON string or plain string
-        try {
-          const locationData = JSON.parse(location);
-          setUserLocation(
-            locationData.address || locationData || "Location not set"
-          );
-        } catch (err) {
-          setUserLocation(location || "Location not set");
-        }
-      } else {
-        setUserLocation("Location not set");
-      }
-    } catch (error) {
-      console.error("Error loading location:", error);
-      setUserLocation("Location not available");
-    }
-  };
 
   const handleToggleAnonymity = () => {
     if (!isAnonymous && (!profileData.firstName || !profileData.lastName)) {
@@ -103,6 +79,39 @@ export default function ProfileScreen() {
         },
         onError: (e: any) => {
           Alert.alert("Error", e?.message || "Failed to update profile");
+        },
+      }
+    );
+  };
+
+  const handleChangePhoto = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permission.status !== "granted") {
+      Alert.alert("Permission required", "Please allow photo library access.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (result.canceled || !result.assets || result.assets.length === 0) {
+      return;
+    }
+
+    const asset = result.assets[0];
+    const fileName =
+      asset.fileName || asset.uri.split("/").pop() || `avatar.jpg`;
+    const mimeType = asset.mimeType || "image/jpeg";
+
+    updateAvatarMutation.mutate(
+      { uri: asset.uri, fileName, mimeType },
+      {
+        onError: (e: any) => {
+          Alert.alert("Upload failed", e?.message || "Could not upload avatar");
         },
       }
     );
@@ -151,6 +160,21 @@ export default function ProfileScreen() {
             {isAnonymous && <View style={styles.anonymousBadge} />}
           </View>
 
+          {!isAnonymous && (
+            <TouchableOpacity
+              style={styles.changePhotoButton}
+              onPress={handleChangePhoto}
+              disabled={updateAvatarMutation.isPending}
+            >
+              <Ionicons name="camera" size={16} color="#1A2A44" />
+              <Text style={styles.changePhotoText}>
+                {updateAvatarMutation.isPending
+                  ? "Uploading..."
+                  : "Change Photo"}
+              </Text>
+            </TouchableOpacity>
+          )}
+
           <Text style={styles.profileName}>
             {isAnonymous
               ? anonymousId
@@ -164,7 +188,9 @@ export default function ProfileScreen() {
           {/* Location Display */}
           <View style={styles.locationContainer}>
             <Ionicons name="location" size={16} color="#B0B8C4" />
-            <Text style={styles.locationText}>{userLocation}</Text>
+            <Text style={styles.locationText}>
+              {user?.region || "Location not set"}
+            </Text>
           </View>
 
           <View style={styles.anonymityToggle}>
@@ -262,10 +288,9 @@ export default function ProfileScreen() {
                 <Text style={styles.inputLabel}>Current Location</Text>
                 <View style={styles.locationInputContainer}>
                   <Ionicons name="location" size={18} color="#B0B8C4" />
-                  <Text style={styles.locationInputText}>{userLocation}</Text>
-                  <TouchableOpacity style={styles.refreshLocationButton}>
-                    <Ionicons name="refresh" size={16} color="#FFFFFF" />
-                  </TouchableOpacity>
+                  <Text style={styles.locationInputText}>
+                    {user?.region || "Location not set"}
+                  </Text>
                 </View>
               </View>
 
@@ -379,6 +404,22 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     marginBottom: 4,
     textAlign: "center",
+  },
+  changePhotoButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  changePhotoText: {
+    fontSize: 14,
+    fontFamily: "Inter-SemiBold",
+    color: "#1A2A44",
   },
   profileEmail: {
     fontSize: 14,
