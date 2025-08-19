@@ -28,22 +28,6 @@ export default function RootLayout() {
     "Inter-Medium": Inter_500Medium,
     "Inter-SemiBold": Inter_600SemiBold,
   });
-  // TODO: REMOVE THIS LATER
-  // Clear AsyncStorage for testing purposes
-  // useEffect(() => {
-  //   const clearStorageForTesting = async () => {
-  //     try {
-  //       await AsyncStorage.removeItem("hasCompletedOnboarding");
-  //       await AsyncStorage.removeItem("userLoation");
-  //       console.log("AsyncStorage cleared for testing");
-  //     } catch (error) {
-  //       console.error("Error clearing AsyncStorage:", error);
-  //     }
-  //   };
-
-  //   // Uncomment the line below to clear storage on component mount
-  //   clearStorageForTesting();
-  // }, []);
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -64,6 +48,7 @@ export default function RootLayout() {
             <Stack.Screen name="onboarding" />
             <Stack.Screen name="location" />
             <Stack.Screen name="auth" />
+            <Stack.Screen name="incident-details" />
             <Stack.Screen name="+not-found" />
           </Stack>
           <StatusBar style="light" />

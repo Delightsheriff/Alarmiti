@@ -1,8 +1,8 @@
+import AppSplash from "@/components/splashScreen";
 import { useAuth } from "@/providers/auth-provider";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
 
 export default function InitialScreen() {
   const router = useRouter();
@@ -37,15 +37,10 @@ export default function InitialScreen() {
   }, [mounting, session, router]);
 
   if (isLoading) {
-    return <View style={styles.container} />;
+    return <AppSplash />;
   }
 
   return null;
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#1A2A44",
-  },
-});
+// no styles needed while splash renders full screen
