@@ -4,7 +4,7 @@ import * as ImagePicker from "expo-image-picker";
 
 import { useEffect, useState } from "react";
 import {
-  Alert,
+  ActivityIndicator,
   Image,
   ScrollView,
   StyleSheet,
@@ -23,6 +23,7 @@ import {
   useUser,
 } from "@/hooks/useUser";
 import { supabase } from "@/lib/supabase";
+import { showToast } from "@/lib/toast";
 import { useAuth } from "@/providers/auth-provider";
 import { useRouter } from "expo-router";
 
@@ -40,7 +41,9 @@ export default function ProfileScreen() {
     lastName: "",
   });
 
-  const isAnonymous = user?.is_anonymous ?? true;
+  const [isAnonymous, setIsAnonymous] = useState<boolean>(
+    user?.is_anonymous ?? true
+  );
   const anonymousId = user?.username || "";
   const userEmail = session?.user?.email || "";
 
@@ -53,22 +56,33 @@ export default function ProfileScreen() {
     }
   }, [user, isEditingProfile]);
 
+  useEffect(() => {
+    setIsAnonymous(user?.is_anonymous ?? true);
+  }, [user?.is_anonymous]);
+
   const handleToggleAnonymity = () => {
     if (!isAnonymous && (!profileData.firstName || !profileData.lastName)) {
-      Alert.alert(
-        "Profile Required",
-        "Please complete your profile before disabling anonymous mode.",
-        [{ text: "OK" }]
+      showToast(
+        "error",
+        "Please complete your profile before disabling anonymous mode."
       );
       return;
     }
-    toggleAnonymousMutation.mutate(!isAnonymous);
+    const nextValue = !isAnonymous;
+    setIsAnonymous(nextValue); // optimistic update
+    toggleAnonymousMutation.mutate(nextValue, {
+      onError: () => {
+        // revert if server update fails
+        setIsAnonymous(!nextValue);
+        showToast("error", "Failed to update anonymity setting");
+      },
+    });
     setIsEditingProfile(false);
   };
 
   const handleSaveProfile = () => {
     if (!profileData.firstName.trim() || !profileData.lastName.trim()) {
-      Alert.alert("Error", "First name and last name are required.");
+      showToast("error", "First name and last name are required.");
       return;
     }
     updateNameMutation.mutate(
@@ -79,10 +93,10 @@ export default function ProfileScreen() {
       {
         onSuccess: () => {
           setIsEditingProfile(false);
-          Alert.alert("Success", "Profile updated successfully!");
+          showToast("success", "Profile updated successfully!");
         },
         onError: (e: any) => {
-          Alert.alert("Error", e?.message || "Failed to update profile");
+          showToast("error", e?.message || "Failed to update profile");
         },
       }
     );
@@ -91,7 +105,7 @@ export default function ProfileScreen() {
   const handleChangePhoto = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permission.status !== "granted") {
-      Alert.alert("Permission required", "Please allow photo library access.");
+      showToast("error", "Please allow photo library access.");
       return;
     }
 
@@ -115,7 +129,7 @@ export default function ProfileScreen() {
       { uri: asset.uri, fileName, mimeType },
       {
         onError: (e: any) => {
-          Alert.alert("Upload failed", e?.message || "Could not upload avatar");
+          showToast("error", e?.message || "Could not upload avatar");
         },
       }
     );
@@ -126,7 +140,7 @@ export default function ProfileScreen() {
       await supabase.auth.signOut();
       router.replace("/auth");
     } catch (e: any) {
-      Alert.alert("Logout failed", e?.message || "Please try again");
+      showToast("error", e?.message || "Logout failed. Please try again");
     }
   };
 
@@ -175,12 +189,14 @@ export default function ProfileScreen() {
               onPress={handleChangePhoto}
               disabled={updateAvatarMutation.isPending}
             >
-              <Ionicons name="camera" size={16} color="#1A2A44" />
-              <Text style={styles.changePhotoText}>
-                {updateAvatarMutation.isPending
-                  ? "Uploading..."
-                  : "Change Photo"}
-              </Text>
+              {updateAvatarMutation.isPending ? (
+                <ActivityIndicator size="small" color="#1A2A44" />
+              ) : (
+                <>
+                  <Ionicons name="camera" size={16} color="#1A2A44" />
+                  <Text style={styles.changePhotoText}>Change Photo</Text>
+                </>
+              )}
             </TouchableOpacity>
           )}
 
@@ -305,10 +321,18 @@ export default function ProfileScreen() {
 
               {isEditingProfile && (
                 <TouchableOpacity
-                  style={styles.saveButton}
+                  style={[
+                    styles.saveButton,
+                    updateNameMutation.isPending && { opacity: 0.7 },
+                  ]}
                   onPress={handleSaveProfile}
+                  disabled={updateNameMutation.isPending}
                 >
-                  <Text style={styles.saveButtonText}>Save Profile</Text>
+                  {updateNameMutation.isPending ? (
+                    <ActivityIndicator size="small" color="#1A2A44" />
+                  ) : (
+                    <Text style={styles.saveButtonText}>Save Profile</Text>
+                  )}
                 </TouchableOpacity>
               )}
             </View>
