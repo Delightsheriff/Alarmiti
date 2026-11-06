@@ -1,8 +1,10 @@
 import CustomSafeAreaView from "@/components/custom-safe-area-view";
+import { formatClockTime } from "@/data/sample";
+import { useSampleStore } from "@/data/store";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import {
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,75 +14,14 @@ import {
 
 export default function HomeScreen() {
   const router = useRouter();
-
-  const feedItems = [
-    {
-      id: 1,
-      type: "urgent",
-      title: "Armed Robbery Alert",
-      description:
-        "Armed robbers attacked commuters along Aba Road near Mile 3 Junction. Three motorcycles involved, carrying weapons. Please avoid the area and use alternative routes.",
-      image:
-        "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=400",
-      time: "16:30 PM",
-      reporter: "Chika Okafor",
-    },
-    {
-      id: 2,
-      title: "Community Security Meeting",
-      description:
-        "Town Union security meeting tomorrow at 6 PM at GRA Community Hall. Discussing recent security challenges and establishing vigilante patrols.",
-      image:
-        "https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=400",
-      time: "14:15 PM",
-      reporter: "GRA Residents Association",
-    },
-    {
-      id: 3,
-      title: "Pipeline Vandalism Warning",
-      description:
-        "Suspected pipeline vandalism activities reported in Rumuokoro area. NSCDC has been alerted. Residents should stay vigilant and report suspicious movements.",
-      image:
-        "https://images.pexels.com/photos/4553618/pexels-photo-4553618.jpeg?auto=compress&cs=tinysrgb&w=400",
-      time: "12:45 PM",
-      reporter: "Emeka Nwachukwu",
-    },
-    {
-      id: 4,
-      title: "Missing Child Found",
-      description:
-        "7-year-old Blessing found safe near Mile 1 Market. She was lost for 3 hours. Thanks to all who helped in the search. Family is grateful.",
-      image:
-        "https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=400",
-      time: "10:20 AM",
-      reporter: "Adaeze Okoro",
-    },
-    {
-      id: 5,
-      title: "Cultist Activity Alert",
-      description:
-        "Suspected cultist gathering reported in Diobu area last night. Residents heard gunshots around 2 AM. Police have been notified and patrols increased.",
-      image:
-        "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=400",
-      time: "08:30 AM",
-      reporter: "Ikenna Eze",
-    },
-    {
-      id: 6,
-      title: "Kidnapping Attempt Foiled",
-      description:
-        "Quick action by local vigilante prevented kidnapping attempt on Eleme Junction Road. Three suspects arrested. Vehicle recovered with fake number plates.",
-      image:
-        "https://images.pexels.com/photos/4553618/pexels-photo-4553618.jpeg?auto=compress&cs=tinysrgb&w=400",
-      time: "06:15 AM",
-      reporter: "Port Harcourt Vigilante",
-    },
-  ];
+  const { incidents } = useSampleStore();
 
   return (
     <CustomSafeAreaView>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Alarmit</Text>
+        <Text style={styles.headerTitle} accessibilityRole="header">
+          Alarmiti
+        </Text>
       </View>
 
       <ScrollView
@@ -88,13 +29,23 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.feedContainer}>
-          {feedItems.map((item) => (
+          {incidents.map((item) => (
             <TouchableOpacity
               key={item.id}
               style={styles.feedItem}
-              onPress={() => router.push("/incident-details")}
+              onPress={() =>
+                router.push({
+                  pathname: "/incident-details",
+                  params: { id: item.id },
+                })
+              }
+              accessibilityRole="button"
+              accessibilityLabel={`${item.urgent ? "Urgent: " : ""}${
+                item.title
+              }, ${item.location}`}
+              accessibilityHint="Opens the incident details"
             >
-              {item.type === "urgent" && (
+              {item.urgent && (
                 <View style={styles.urgentBadge}>
                   <Text style={styles.urgentText}>Urgent</Text>
                 </View>
@@ -102,12 +53,20 @@ export default function HomeScreen() {
 
               <View style={styles.feedContent}>
                 <Text style={styles.feedTitle}>{item.title}</Text>
-                <Text style={styles.feedDescription}>{item.description}</Text>
+                <Text style={styles.feedDescription} numberOfLines={3}>
+                  {item.description}
+                </Text>
 
                 <View style={styles.feedMeta}>
                   <View style={styles.metaItem}>
                     <Ionicons name="time" size={14} color="#B0B8C4" />
-                    <Text style={styles.metaText}>{item.time}</Text>
+                    <Text style={styles.metaText}>
+                      {formatClockTime(item.reportedAt)}
+                    </Text>
+                  </View>
+                  <View style={styles.metaItem}>
+                    <Ionicons name="location" size={14} color="#B0B8C4" />
+                    <Text style={styles.metaText}>{item.location}</Text>
                   </View>
                   <View style={styles.metaItem}>
                     <Ionicons name="person" size={14} color="#B0B8C4" />
@@ -118,7 +77,15 @@ export default function HomeScreen() {
                 </View>
               </View>
 
-              <Image source={{ uri: item.image }} style={styles.feedImage} />
+              {item.image && (
+                <Image
+                  source={{ uri: item.image }}
+                  style={styles.feedImage}
+                  contentFit="cover"
+                  transition={200}
+                  accessible={false}
+                />
+              )}
             </TouchableOpacity>
           ))}
         </View>
@@ -127,11 +94,18 @@ export default function HomeScreen() {
       <TouchableOpacity
         style={styles.fab}
         onPress={() => router.push("/report-incident")}
+        accessibilityRole="button"
+        accessibilityLabel="Report incident"
       >
         <Ionicons name="add" size={28} color="#1A2A44" />
       </TouchableOpacity>
 
-      <View style={styles.fabLabel}>
+      <View
+        style={styles.fabLabel}
+        pointerEvents="none"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
         <Text style={styles.fabLabelText}>Report Incident</Text>
       </View>
     </CustomSafeAreaView>
@@ -169,14 +143,12 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   urgentBadge: {
-    position: "absolute",
-    top: 12,
-    right: 12,
+    alignSelf: "flex-start",
     backgroundColor: "#FF6B6B",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-    zIndex: 1,
+    marginBottom: 10,
   },
   urgentText: {
     fontSize: 12,

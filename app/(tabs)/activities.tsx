@@ -1,5 +1,7 @@
 import CustomSafeAreaView from "@/components/custom-safe-area-view";
 import { Ionicons } from "@expo/vector-icons";
+import { categories, formatRelativeTime, Incident } from "@/data/sample";
+import { useSampleStore } from "@/data/store";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -15,87 +17,16 @@ export default function ActivityScreen() {
   const router = useRouter();
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const { incidents } = useSampleStore();
 
-  const recentActivities = [
-    {
-      id: 1,
-      type: "suspicious",
-      title: "Suspicious activity reported near UNIPORT...",
-      reporter: "Chioma Okwu",
-      time: "2 hours ago",
-      icon: "eye" as const,
-    },
-    {
-      id: 2,
-      type: "meeting",
-      title: "Town hall meeting scheduled for...",
-      reporter: "Emeka Nwosu",
-      time: "4 hours ago",
-      icon: "people" as const,
-    },
-    {
-      id: 3,
-      type: "theft",
-      title: "Phone theft reported at Aluu Junction...",
-      reporter: "Fatima Abdullahi",
-      time: "6 hours ago",
-      icon: "phone-portrait" as const,
-    },
-    {
-      id: 4,
-      type: "vandalism",
-      title: "Vandalism at Choba Motor Park...",
-      reporter: "Tunde Adebayo",
-      time: "8 hours ago",
-      icon: "hammer" as const,
-    },
-    {
-      id: 5,
-      type: "noise",
-      title: "Noise complaint from Mgbuoba area...",
-      reporter: "Grace Edet",
-      time: "12 hours ago",
-      icon: "volume-high" as const,
-    },
-    {
-      id: 6,
-      type: "safety",
-      title: "Poor lighting reported on East-West Road...",
-      reporter: "Ahmed Ibrahim",
-      time: "1 day ago",
-      icon: "bulb" as const,
-    },
-    {
-      id: 7,
-      type: "accident",
-      title: "Minor accident at Eleme Junction...",
-      reporter: "Blessing Okafor",
-      time: "1 day ago",
-      icon: "warning" as const,
-    },
-    {
-      id: 8,
-      type: "robbery",
-      title: "Armed robbery attempt at Mile 1 Market...",
-      reporter: "Kemi Alabi",
-      time: "2 days ago",
-      icon: "shield-half" as const,
-    },
-    {
-      id: 9,
-      type: "fire",
-      title: "Small fire outbreak in Trans-Amadi...",
-      reporter: "Victor Obi",
-      time: "2 days ago",
-      icon: "flame" as const,
-    },
-  ];
-
-  const filteredActivities = recentActivities.filter(
-    (activity) =>
-      activity.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      activity.reporter.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      activity.type.toLowerCase().includes(searchQuery.toLowerCase())
+  const query = searchQuery.trim().toLowerCase();
+  const filteredActivities = incidents.filter((incident) =>
+    [
+      incident.title,
+      incident.reporter,
+      incident.location,
+      categories[incident.category].label,
+    ].some((field) => field.toLowerCase().includes(query))
   );
 
   const handleSearchFocus = () => {
@@ -134,8 +65,14 @@ export default function ActivityScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               autoFocus={true}
+              accessibilityLabel="Search activities"
             />
-            <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+            <TouchableOpacity
+              onPress={clearSearch}
+              style={styles.clearButton}
+              accessibilityRole="button"
+              accessibilityLabel="Close search"
+            >
               <Ionicons name="close-circle" size={20} color="#B0B8C4" />
             </TouchableOpacity>
           </View>
@@ -178,26 +115,49 @@ export default function ActivityScreen() {
     </View>
   );
 
-  const renderActivity = ({ item }: { item: (typeof recentActivities)[0] }) => (
-    <TouchableOpacity style={styles.activityItem}>
+  const renderActivity = ({ item }: { item: Incident }) => (
+    <TouchableOpacity
+      style={styles.activityItem}
+      onPress={() =>
+        router.push({ pathname: "/incident-details", params: { id: item.id } })
+      }
+      accessibilityRole="button"
+      accessibilityLabel={`${categories[item.category].label}: ${item.title}`}
+      accessibilityHint="Opens the incident details"
+    >
       <View style={styles.activityIcon}>
-        <Ionicons name={item.icon} size={20} color="#1A2A44" />
+        <Ionicons
+          name={categories[item.category].icon}
+          size={20}
+          color="#1A2A44"
+        />
       </View>
       <View style={styles.activityContent}>
-        <Text style={styles.activityTitle}>{item.title}</Text>
-        <Text style={styles.activityMeta}>Reported by {item.reporter}</Text>
+        <Text style={styles.activityTitle} numberOfLines={1}>
+          {item.title}
+        </Text>
+        <Text style={styles.activityMeta}>
+          {item.reporter} · {formatRelativeTime(item.reportedAt)}
+        </Text>
       </View>
     </TouchableOpacity>
   );
 
-  const dataToShow = isSearchActive ? filteredActivities : recentActivities;
+  const dataToShow = isSearchActive ? filteredActivities : incidents;
 
   return (
     <CustomSafeAreaView>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Alarmit</Text>
+        <Text style={styles.headerTitle} accessibilityRole="header">
+          Alarmiti
+        </Text>
         {!isSearchActive && (
-          <TouchableOpacity style={styles.settingsButton} onPress={openSearch}>
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={openSearch}
+            accessibilityRole="button"
+            accessibilityLabel="Search activities"
+          >
             <Ionicons name="search" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         )}
@@ -206,7 +166,7 @@ export default function ActivityScreen() {
       <FlatList
         data={dataToShow}
         renderItem={renderActivity}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.id}
         ListHeaderComponent={renderListHeader}
         ListEmptyComponent={isSearchActive ? renderEmptySearch : null}
         contentContainerStyle={styles.listContent}
@@ -216,11 +176,18 @@ export default function ActivityScreen() {
       <TouchableOpacity
         style={styles.fab}
         onPress={() => router.push("/report-incident")}
+        accessibilityRole="button"
+        accessibilityLabel="Report incident"
       >
         <Ionicons name="add" size={28} color="#FFFFFF" />
       </TouchableOpacity>
 
-      <View style={styles.fabLabel}>
+      <View
+        style={styles.fabLabel}
+        pointerEvents="none"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
         <Text style={styles.fabLabelText}>Report Incident</Text>
       </View>
     </CustomSafeAreaView>
