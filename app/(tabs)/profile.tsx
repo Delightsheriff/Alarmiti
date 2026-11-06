@@ -1,5 +1,5 @@
 import { IncidentRow } from "@/components/incident";
-import { SectionHeader } from "@/components/ui/primitives";
+import { ImageOutline, SectionHeader } from "@/components/ui/primitives";
 import { PressableScale } from "@/components/ui/PressableScale";
 import { myReportIds } from "@/data/sample";
 import { useSampleStore } from "@/data/store";
@@ -46,11 +46,14 @@ function Avatar({
   const style = { width: size, height: size, borderRadius: size / 2 };
   if (uri) {
     return (
-      <Image
-        source={{ uri }}
-        style={style}
-        accessibilityLabel="Your profile photo"
-      />
+      <View style={style}>
+        <Image
+          source={{ uri }}
+          style={style}
+          accessibilityLabel="Your profile photo"
+        />
+        <ImageOutline style={{ borderRadius: size / 2 }} />
+      </View>
     );
   }
   return (
@@ -249,7 +252,7 @@ export default function ProfileScreen() {
             <>
               <View style={styles.divider} />
               <PressableScale
-                scaleTo={0.99}
+                scaleTo={0.98}
                 onPress={startEditing}
                 style={styles.row}
               >
@@ -341,7 +344,7 @@ export default function ProfileScreen() {
             <View key={label}>
               {index > 0 && <View style={styles.divider} />}
               <PressableScale
-                scaleTo={0.99}
+                scaleTo={0.98}
                 onPress={() =>
                   showToast("info", "Settings are static in this concept")
                 }

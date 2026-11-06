@@ -60,7 +60,6 @@ export function IconButton({
     <PressableScale
       onPress={onPress}
       accessibilityLabel={label}
-      scaleTo={0.92}
       style={[
         styles.iconButton,
         { width: size, height: size, borderRadius: size / 2 },
@@ -133,6 +132,15 @@ export function IconTile({
   );
 }
 
+/**
+ * A 1pt edge laid over a photo so pale images don't melt into the light
+ * background. Pure black at low opacity, so it never tints the photo's edge.
+ * Pass the photo's corner radius in `style`.
+ */
+export function ImageOutline({ style }: { style?: StyleProp<ViewStyle> }) {
+  return <View pointerEvents="none" style={[styles.imageOutline, style]} />;
+}
+
 export function SectionHeader({
   title,
   action,
@@ -153,6 +161,11 @@ export function SectionHeader({
 }
 
 const styles = StyleSheet.create({
+  imageOutline: {
+    ...StyleSheet.absoluteFill,
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.1)",
+  },
   chip: {
     flexDirection: "row",
     alignItems: "center",

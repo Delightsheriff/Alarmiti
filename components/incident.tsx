@@ -1,4 +1,4 @@
-import { IconTile, SeverityBadge } from "@/components/ui/primitives";
+import { IconTile, ImageOutline, SeverityBadge } from "@/components/ui/primitives";
 import { PressableScale } from "@/components/ui/PressableScale";
 import {
   categories,
@@ -53,7 +53,6 @@ export function ConfirmButton({ incident }: { incident: Incident }) {
   return (
     <PressableScale
       haptic
-      scaleTo={0.94}
       onPress={() => toggleConfirm(incident.id)}
       accessibilityLabel={mine ? "Remove your confirmation" : "I saw this too"}
       accessibilityState={{ selected: mine }}
@@ -139,6 +138,7 @@ export function IncidentCard({ incident }: { incident: Incident }) {
             contentFit="cover"
             transition={200}
           />
+          <ImageOutline style={styles.cardImageOutline} />
           <View style={styles.cardImageBadge}>
             <SeverityBadge level={incident.severity} solid />
           </View>
@@ -279,7 +279,6 @@ export function HighlightTile({ incident }: { incident: Incident }) {
   const { color } = severity[incident.severity];
   return (
     <PressableScale
-      scaleTo={0.95}
       onPress={() => open(incident.id)}
       accessibilityLabel={`${severity[incident.severity].label}: ${incident.title}`}
       style={styles.highlight}
@@ -287,11 +286,14 @@ export function HighlightTile({ incident }: { incident: Incident }) {
       <View style={[styles.highlightRing, { borderColor: color }]}>
         <View style={[styles.highlightInner, { backgroundColor: tint(color) }]}>
           {incident.image ? (
-            <Image
-              source={incident.image}
-              style={StyleSheet.absoluteFill}
-              contentFit="cover"
-            />
+            <>
+              <Image
+                source={incident.image}
+                style={StyleSheet.absoluteFill}
+                contentFit="cover"
+              />
+              <ImageOutline style={{ borderRadius: 17 }} />
+            </>
           ) : (
             <Ionicons name={category.icon} size={26} color={color} />
           )}
@@ -312,7 +314,6 @@ export function ReportTile() {
   const router = useRouter();
   return (
     <PressableScale
-      scaleTo={0.95}
       haptic
       onPress={() => router.push("/report-incident")}
       accessibilityLabel="Report an incident"
@@ -388,6 +389,10 @@ const styles = StyleSheet.create({
   cardImage: {
     height: 180,
     width: "100%",
+  },
+  cardImageOutline: {
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
   },
   cardImageBadge: {
     position: "absolute",

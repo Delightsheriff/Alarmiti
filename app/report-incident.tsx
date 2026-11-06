@@ -1,3 +1,4 @@
+import { ImageOutline } from "@/components/ui/primitives";
 import { PressableScale } from "@/components/ui/PressableScale";
 import {
   categories,
@@ -227,7 +228,7 @@ export default function ReportIncidentScreen() {
                 {locationSuggestions.map((name) => (
                   <PressableScale
                     key={name}
-                    scaleTo={0.99}
+                    scaleTo={0.98}
                     onPress={() => pickLocation(name)}
                     style={styles.suggestion}
                   >
@@ -268,6 +269,7 @@ export default function ReportIncidentScreen() {
                   contentFit="cover"
                   accessibilityLabel="Attached photo"
                 />
+                <ImageOutline style={{ borderRadius: radius.md }} />
                 <PressableScale
                   onPress={() => setPhotoUri(null)}
                   accessibilityLabel="Remove photo"
@@ -475,7 +477,8 @@ const styles = StyleSheet.create({
     gap: space.sm,
     padding: space.md,
     minHeight: 64,
-    borderRadius: radius.md,
+    // Concentric with the icon tile: 10 + 12 padding + 1.5 border ≈ 24.
+    borderRadius: radius.lg,
     backgroundColor: colors.surfaceRaised,
     borderWidth: 1.5,
     borderColor: "transparent",
@@ -483,7 +486,7 @@ const styles = StyleSheet.create({
   tileIcon: {
     width: 36,
     height: 36,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
