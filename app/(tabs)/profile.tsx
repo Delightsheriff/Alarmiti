@@ -1,23 +1,82 @@
-import CustomSafeAreaView from "@/components/custom-safe-area-view";
+import { IncidentRow } from "@/components/incident";
+import { SectionHeader } from "@/components/ui/primitives";
+import { PressableScale } from "@/components/ui/PressableScale";
+import { myReportIds } from "@/data/sample";
 import { useSampleStore } from "@/data/store";
 import { showToast } from "@/lib/toast";
+import { colors, radius, space, TAB_BAR_CLEARANCE, type } from "@/theme/tokens";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { useState } from "react";
+import { LinearGradient } from "expo-linear-gradient";
+import { ComponentProps, useState } from "react";
 import {
-  Image,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+type IconName = ComponentProps<typeof Ionicons>["name"];
+
+// Anonymous avatars get a gradient picked from the handle, so the same
+// neighbour always looks the same without showing a face.
+const avatarGradients: [string, string][] = [
+  ["#7CF2C8", "#3B82F6"],
+  ["#FFC857", "#FF8A5C"],
+  ["#7AA7FF", "#A78BFA"],
+  ["#FF8A5C", "#FF5A6E"],
+];
+
+const hash = (handle: string) =>
+  [...handle].reduce((sum, char) => sum * 31 + char.charCodeAt(0), 7) >>> 0;
+
+function Avatar({
+  handle,
+  uri,
+  size = 72,
+}: {
+  handle: string;
+  uri?: string;
+  size?: number;
+}) {
+  const style = { width: size, height: size, borderRadius: size / 2 };
+  if (uri) {
+    return (
+      <Image
+        source={{ uri }}
+        style={style}
+        accessibilityLabel="Your profile photo"
+      />
+    );
+  }
+  return (
+    <LinearGradient
+      colors={avatarGradients[hash(handle) % avatarGradients.length]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[style, styles.avatarFill]}
+    >
+      <View
+        style={{
+          width: size * 0.4,
+          height: size * 0.4,
+          borderRadius: size * 0.12,
+          backgroundColor: "rgba(255,255,255,0.4)",
+          transform: [{ rotate: `${hash(handle) % 90}deg` }],
+        }}
+      />
+    </LinearGradient>
+  );
+}
 
 export default function ProfileScreen() {
-  const { profile, updateProfile } = useSampleStore();
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const insets = useSafeAreaInsets();
+  const { profile, updateProfile, incidents, confirmed } = useSampleStore();
+  const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState({
     firstName: profile.firstName,
     lastName: profile.lastName,
@@ -25,16 +84,23 @@ export default function ProfileScreen() {
 
   const isAnonymous = profile.isAnonymous;
   const hasName = Boolean(profile.firstName && profile.lastName);
+  const fullName = `${profile.firstName} ${profile.lastName}`.trim();
+  const shownAs = isAnonymous || !hasName ? profile.username : fullName;
+  const myReports = incidents.filter(
+    (incident) =>
+      myReportIds.includes(incident.id) ||
+      incident.reporter === profile.username ||
+      (hasName && incident.reporter === fullName),
+  );
 
   const startEditing = () => {
     setDraft({ firstName: profile.firstName, lastName: profile.lastName });
-    setIsEditingProfile(true);
+    setIsEditing(true);
   };
 
-  const handleToggleAnonymity = (nextValue: boolean) => {
+  const toggleAnonymous = (nextValue: boolean) => {
     updateProfile({ isAnonymous: nextValue });
-    setIsEditingProfile(false);
-
+    setIsEditing(false);
     // Going public without a name opens the editor rather than blocking the
     // switch, so anonymity can always be turned back on.
     if (!nextValue && !hasName) {
@@ -43,7 +109,7 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleSaveProfile = () => {
+  const saveName = () => {
     const firstName = draft.firstName.trim();
     const lastName = draft.lastName.trim();
     if (!firstName || !lastName) {
@@ -51,485 +117,367 @@ export default function ProfileScreen() {
       return;
     }
     updateProfile({ firstName, lastName });
-    setIsEditingProfile(false);
+    setIsEditing(false);
     showToast("success", "Profile updated");
   };
 
-  const handleChangePhoto = async () => {
+  const changePhoto = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permission.status !== "granted") {
       showToast("error", "Please allow photo library access.");
       return;
     }
-
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
     });
-
     if (!result.canceled && result.assets.length > 0) {
       updateProfile({ avatarUri: result.assets[0].uri });
     }
   };
 
+  const stats = [
+    { label: "Reports", value: profile.stats.reports },
+    {
+      label: "Confirmations",
+      value: profile.stats.confirmations + confirmed.size,
+    },
+    { label: "Helped", value: profile.stats.helped },
+  ];
+
   return (
-    <CustomSafeAreaView>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.header}>
-          <Text style={styles.headerTitle} accessibilityRole="header">
-            Profile
-          </Text>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={{
+        paddingTop: insets.top + space.sm,
+        paddingBottom: TAB_BAR_CLEARANCE,
+      }}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.headerCard}>
+        <View style={styles.identity}>
+          <PressableScale
+            onPress={isAnonymous ? undefined : changePhoto}
+            accessibilityLabel={
+              isAnonymous ? "Anonymous avatar" : "Change profile photo"
+            }
+          >
+            <Avatar
+              handle={profile.username}
+              uri={isAnonymous ? undefined : profile.avatarUri}
+            />
+            {!isAnonymous && (
+              <View style={styles.cameraBadge}>
+                <Ionicons name="camera" size={12} color={colors.onAccent} />
+              </View>
+            )}
+          </PressableScale>
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text
+              style={[type.title, { color: colors.text }]}
+              accessibilityRole="header"
+            >
+              {shownAs}
+            </Text>
+            <View style={styles.place}>
+              <Ionicons name="location" size={14} color={colors.accent} />
+              <Text style={[type.callout, { color: colors.textMuted }]}>
+                {profile.region}
+              </Text>
+            </View>
+          </View>
         </View>
 
-        {/* Profile Section */}
-        <View style={styles.profileSection}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              {isAnonymous ? (
-                <Ionicons name="shield" size={32} color="#1A2A44" />
-              ) : profile.avatarUri ? (
-                <Image
-                  source={{ uri: profile.avatarUri }}
-                  style={{ width: 80, height: 80, borderRadius: 40 }}
-                  accessibilityLabel="Your profile photo"
-                />
-              ) : (
-                <Ionicons name="person" size={32} color="#1A2A44" />
-              )}
-            </View>
-            {isAnonymous && <View style={styles.anonymousBadge} />}
-          </View>
-
-          {!isAnonymous && (
-            <TouchableOpacity
-              style={styles.changePhotoButton}
-              onPress={handleChangePhoto}
-              accessibilityRole="button"
-              accessibilityLabel="Change profile photo"
+        <View style={styles.stats}>
+          {stats.map((stat, index) => (
+            <View
+              key={stat.label}
+              style={[styles.stat, index > 0 && styles.statDivider]}
+              accessible
+              accessibilityLabel={`${stat.value} ${stat.label}`}
             >
-              <Ionicons name="camera" size={16} color="#1A2A44" />
-              <Text style={styles.changePhotoText}>Change Photo</Text>
-            </TouchableOpacity>
-          )}
+              <Text style={[type.title, { color: colors.text }]}>
+                {stat.value}
+              </Text>
+              <Text style={[type.caption, { color: colors.textMuted }]}>
+                {stat.label}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </View>
 
-          <Text style={styles.profileName}>
-            {isAnonymous
-              ? profile.username
-              : hasName
-              ? `${profile.firstName} ${profile.lastName}`
-              : "Complete Your Profile"}
-          </Text>
-
-          {!isAnonymous && (
-            <Text style={styles.profileEmail}>{profile.email}</Text>
-          )}
-
-          {/* Location Display */}
-          <View style={styles.locationContainer}>
-            <Ionicons name="location" size={16} color="#B0B8C4" />
-            <Text style={styles.locationText}>{profile.region}</Text>
+      <View style={styles.section}>
+        <SectionHeader title="How neighbours see you" />
+        <View style={styles.card}>
+          <View style={styles.preview}>
+            <Avatar
+              handle={profile.username}
+              uri={isAnonymous ? undefined : profile.avatarUri}
+              size={36}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={[type.callout, styles.strong]}>{shownAs}</Text>
+              <Text style={[type.caption, { color: colors.textMuted }]}>
+                Reported a safety hazard · just now
+              </Text>
+            </View>
           </View>
-
-          <View style={styles.anonymityToggle}>
-            <View style={styles.toggleContent}>
-              <View style={styles.toggleIcon}>
-                <Ionicons
-                  name={isAnonymous ? "eye-off" : "eye"}
-                  size={16}
-                  color="#1A2A44"
-                />
-              </View>
-              <View style={styles.toggleText}>
-                <Text style={styles.toggleLabel}>Anonymous Mode</Text>
-                <Text style={styles.toggleDescription}>
-                  {isAnonymous
-                    ? "Your identity is hidden from other users"
-                    : "Your profile is visible to the community"}
-                </Text>
-              </View>
+          <View style={styles.divider} />
+          <View style={styles.row}>
+            <Ionicons name="eye-off" size={20} color={colors.textMuted} />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={[type.callout, styles.strong]}>Stay anonymous</Text>
+              <Text style={[type.caption, { color: colors.textMuted }]}>
+                {isAnonymous
+                  ? "Your name and photo are hidden on everything you post."
+                  : "Your name and photo show on your reports."}
+              </Text>
             </View>
             <Switch
               value={isAnonymous}
-              onValueChange={handleToggleAnonymity}
-              accessibilityLabel="Anonymous mode"
-              trackColor={{
-                false: "rgba(255, 255, 255, 0.2)",
-                true: "#FFFFFF",
-              }}
-              thumbColor={isAnonymous ? "#1A2A44" : "#B0B8C4"}
-              ios_backgroundColor="rgba(255, 255, 255, 0.2)"
+              onValueChange={toggleAnonymous}
+              trackColor={{ false: colors.surfaceRaised, true: colors.accent }}
+              accessibilityLabel="Stay anonymous"
             />
           </View>
-        </View>
 
-        {/* Profile Form Section (only visible when not anonymous) */}
-        {!isAnonymous && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Profile Information</Text>
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() =>
-                  isEditingProfile ? setIsEditingProfile(false) : startEditing()
-                }
-                accessibilityRole="button"
-                accessibilityLabel={
-                  isEditingProfile ? "Cancel editing" : "Edit profile"
-                }
+          {!isAnonymous && !isEditing && (
+            <>
+              <View style={styles.divider} />
+              <PressableScale
+                scaleTo={0.99}
+                onPress={startEditing}
+                style={styles.row}
               >
-                <Ionicons name="create" size={16} color="#FFFFFF" />
-                <Text style={styles.editButtonText}>
-                  {isEditingProfile ? "Cancel" : "Edit"}
+                <Ionicons
+                  name="create-outline"
+                  size={20}
+                  color={colors.textMuted}
+                />
+                <Text style={[type.callout, styles.strong, { flex: 1 }]}>
+                  {hasName ? "Edit your name" : "Add your name"}
                 </Text>
-              </TouchableOpacity>
-            </View>
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={colors.textFaint}
+                />
+              </PressableScale>
+            </>
+          )}
 
-            <View style={styles.sectionContent}>
-              <View style={styles.nameRow}>
-                <View style={styles.nameInputContainer}>
-                  <Text style={styles.inputLabel}>First Name</Text>
-                  {isEditingProfile ? (
-                    <TextInput
-                      style={styles.textInput}
-                      value={draft.firstName}
-                      onChangeText={(text) =>
-                        setDraft({ ...draft, firstName: text })
-                      }
-                      placeholder="Enter first name"
-                      placeholderTextColor="#B0B8C4"
-                      accessibilityLabel="First name"
-                    />
-                  ) : (
-                    <View style={styles.inputDisplayContainer}>
-                      <Text style={styles.inputValue}>
-                        {profile.firstName || "Not set"}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-                <View style={styles.nameInputContainer}>
-                  <Text style={styles.inputLabel}>Last Name</Text>
-                  {isEditingProfile ? (
-                    <TextInput
-                      style={styles.textInput}
-                      value={draft.lastName}
-                      onChangeText={(text) =>
-                        setDraft({ ...draft, lastName: text })
-                      }
-                      placeholder="Enter last name"
-                      placeholderTextColor="#B0B8C4"
-                      accessibilityLabel="Last name"
-                    />
-                  ) : (
-                    <View style={styles.inputDisplayContainer}>
-                      <Text style={styles.inputValue}>
-                        {profile.lastName || "Not set"}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-
-              <View style={styles.locationInputGroup}>
-                <Text style={styles.inputLabel}>Current Location</Text>
-                <View style={styles.locationInputContainer}>
-                  <Ionicons name="location" size={18} color="#B0B8C4" />
-                  <Text style={styles.locationInputText}>{profile.region}</Text>
-                </View>
-              </View>
-
-              {isEditingProfile && (
-                <TouchableOpacity
-                  style={styles.saveButton}
-                  onPress={handleSaveProfile}
-                  accessibilityRole="button"
+          {!isAnonymous && isEditing && (
+            <View style={styles.editor}>
+              <TextInput
+                style={[type.body, styles.input]}
+                placeholder="First name"
+                placeholderTextColor={colors.textFaint}
+                value={draft.firstName}
+                onChangeText={(firstName) => setDraft({ ...draft, firstName })}
+                autoCapitalize="words"
+                accessibilityLabel="First name"
+              />
+              <TextInput
+                style={[type.body, styles.input]}
+                placeholder="Last name"
+                placeholderTextColor={colors.textFaint}
+                value={draft.lastName}
+                onChangeText={(lastName) => setDraft({ ...draft, lastName })}
+                autoCapitalize="words"
+                accessibilityLabel="Last name"
+              />
+              <View style={styles.editorActions}>
+                <PressableScale
+                  onPress={() => setIsEditing(false)}
+                  style={[styles.button, styles.buttonQuiet]}
                 >
-                  <Text style={styles.saveButtonText}>Save Profile</Text>
-                </TouchableOpacity>
-              )}
+                  <Text style={[type.callout, styles.strong]}>Cancel</Text>
+                </PressableScale>
+                <PressableScale haptic onPress={saveName} style={styles.button}>
+                  <Text
+                    style={[
+                      type.callout,
+                      styles.strong,
+                      { color: colors.onAccent },
+                    ]}
+                  >
+                    Save
+                  </Text>
+                </PressableScale>
+              </View>
             </View>
-          </View>
-        )}
-
-        {/* Privacy Notice */}
-        <View style={styles.privacyNotice}>
-          <Ionicons name="shield-checkmark" size={16} color="#B0B8C4" />
-          <Text style={styles.privacyText}>
-            {isAnonymous
-              ? "Your reports and activities are completely anonymous. Only you can see your identity."
-              : "Your profile is visible to verified community members for building trust."}
-          </Text>
+          )}
         </View>
-      </ScrollView>
-    </CustomSafeAreaView>
+      </View>
+
+      <View style={styles.section}>
+        <SectionHeader
+          title="My reports"
+          action={
+            <Text style={[type.caption, { color: colors.textMuted }]}>
+              {myReports.length}
+            </Text>
+          }
+        />
+        {myReports.map((incident) => (
+          <IncidentRow key={incident.id} incident={incident} />
+        ))}
+      </View>
+
+      <View style={styles.section}>
+        <SectionHeader title="Settings" />
+        <View style={styles.card}>
+          {(
+            [
+              ["notifications-outline", "Alert radius", "1 km"],
+              ["moon-outline", "Quiet hours", "11 PM – 7 AM"],
+              ["information-circle-outline", "About this concept", ""],
+            ] as [IconName, string, string][]
+          ).map(([icon, label, value], index) => (
+            <View key={label}>
+              {index > 0 && <View style={styles.divider} />}
+              <PressableScale
+                scaleTo={0.99}
+                onPress={() =>
+                  showToast("info", "Settings are static in this concept")
+                }
+                style={styles.row}
+              >
+                <Ionicons name={icon} size={20} color={colors.textMuted} />
+                <Text style={[type.callout, styles.strong, { flex: 1 }]}>
+                  {label}
+                </Text>
+                {value ? (
+                  <Text style={[type.callout, { color: colors.textMuted }]}>
+                    {value}
+                  </Text>
+                ) : null}
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={colors.textFaint}
+                />
+              </PressableScale>
+            </View>
+          ))}
+        </View>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
+  screen: {
     flex: 1,
+    backgroundColor: colors.bg,
   },
-  scrollContent: {
-    paddingBottom: 100,
+  headerCard: {
+    marginHorizontal: space.gutter,
+    padding: space.xl,
+    gap: space.xl,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
   },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 24,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontFamily: "Manrope-Bold",
-    color: "#FFFFFF",
-  },
-  profileSection: {
+  identity: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 24,
-    marginBottom: 32,
+    gap: space.lg,
   },
-  avatarContainer: {
-    position: "relative",
-    marginBottom: 16,
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 2,
-    borderColor: "#B0B8C4",
+  avatarFill: {
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
   },
-  anonymousBadge: {
+  cameraBadge: {
     position: "absolute",
-    top: -2,
     right: -2,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#4CAF50",
-    borderWidth: 3,
-    borderColor: "#1A2A44",
-  },
-  profileName: {
-    fontSize: 24,
-    fontFamily: "Manrope-SemiBold",
-    color: "#FFFFFF",
-    marginBottom: 4,
-    textAlign: "center",
-  },
-  changePhotoButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginTop: 8,
-    marginBottom: 8,
-  },
-  changePhotoText: {
-    fontSize: 14,
-    fontFamily: "Inter-SemiBold",
-    color: "#1A2A44",
-  },
-  profileEmail: {
-    fontSize: 14,
-    fontFamily: "Inter-Regular",
-    color: "#B0B8C4",
-    marginBottom: 8,
-  },
-  locationContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 24,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 8,
-    gap: 6,
-  },
-  locationText: {
-    fontSize: 14,
-    fontFamily: "Inter-Regular",
-    color: "#B0B8C4",
-    maxWidth: 200,
-  },
-  anonymityToggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-    width: "100%",
-  },
-  toggleContent: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  toggleIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: "#FFFFFF",
+    bottom: -2,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.accent,
+    borderWidth: 2,
+    borderColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 12,
   },
-  toggleText: {
+  place: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  stats: {
+    flexDirection: "row",
+    paddingTop: space.lg,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.hairline,
+  },
+  stat: {
     flex: 1,
+    alignItems: "center",
+    gap: 2,
   },
-  toggleLabel: {
-    fontSize: 16,
-    fontFamily: "Inter-SemiBold",
-    color: "#FFFFFF",
-    marginBottom: 2,
-  },
-  toggleDescription: {
-    fontSize: 12,
-    fontFamily: "Inter-Regular",
-    color: "#B0B8C4",
-    lineHeight: 16,
+  statDivider: {
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: colors.hairline,
   },
   section: {
-    paddingHorizontal: 24,
-    marginBottom: 32,
+    marginTop: space.xxxl,
   },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
+  card: {
+    marginHorizontal: space.gutter,
+    paddingHorizontal: space.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: "Manrope-SemiBold",
-    color: "#FFFFFF",
-  },
-  editButton: {
+  preview: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 6,
+    gap: space.md,
+    paddingVertical: space.lg,
   },
-  editButtonText: {
-    fontSize: 14,
-    fontFamily: "Inter-Medium",
-    color: "#FFFFFF",
-  },
-  sectionContent: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-    padding: 20,
-  },
-  nameRow: {
+  row: {
     flexDirection: "row",
-    gap: 16,
-    marginBottom: 20,
+    alignItems: "center",
+    gap: space.md,
+    paddingVertical: space.lg,
   },
-  nameInputContainer: {
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.hairline,
+  },
+  strong: {
+    color: colors.text,
+    fontFamily: "Inter-SemiBold",
+  },
+  editor: {
+    gap: space.sm,
+    paddingBottom: space.lg,
+  },
+  input: {
+    height: 48,
+    paddingHorizontal: space.lg,
+    borderRadius: radius.md,
+    backgroundColor: colors.bg,
+    color: colors.text,
+  },
+  editorActions: {
+    flexDirection: "row",
+    gap: space.sm,
+    marginTop: space.xs,
+  },
+  button: {
     flex: 1,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontFamily: "Inter-Medium",
-    color: "#FFFFFF",
-    marginBottom: 8,
-  },
-  textInput: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    fontFamily: "Inter-Regular",
-    color: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-    minHeight: 48,
-  },
-  inputDisplayContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-    minHeight: 48,
+    height: 44,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accent,
+    alignItems: "center",
     justifyContent: "center",
   },
-  inputValue: {
-    fontSize: 16,
-    fontFamily: "Inter-Regular",
-    color: "#FFFFFF",
-  },
-  locationInputGroup: {
-    marginBottom: 20,
-  },
-  locationInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-    minHeight: 48,
-    gap: 12,
-  },
-  locationInputText: {
-    flex: 1,
-    fontSize: 16,
-    fontFamily: "Inter-Regular",
-    color: "#FFFFFF",
-  },
-  saveButton: {
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontFamily: "Inter-SemiBold",
-    color: "#1A2A44",
-  },
-  privacyNotice: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    marginHorizontal: 24,
-    marginBottom: 32,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-    gap: 12,
-  },
-  privacyText: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: "Inter-Regular",
-    color: "#B0B8C4",
-    lineHeight: 20,
+  buttonQuiet: {
+    backgroundColor: colors.surfaceRaised,
   },
 });
