@@ -1,67 +1,19 @@
-import { Ionicons } from "@expo/vector-icons";
+import { FloatingTabBar } from "@/components/FloatingTabBar";
+import { colors } from "@/theme/tokens";
 import { Tabs } from "expo-router";
 
 export default function TabLayout() {
   return (
     <Tabs
+      tabBar={(props) => <FloatingTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: "#1A2A44",
-          borderTopColor: "rgba(255, 255, 255, 0.1)",
-          borderTopWidth: 1,
-          paddingTop: 8,
-          paddingBottom: 8,
-          height: 70,
-        },
-        tabBarActiveTintColor: "#FFFFFF",
-        tabBarInactiveTintColor: "#B0B8C4",
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontFamily: "Inter-Medium",
-          marginTop: 4,
-        },
+        sceneStyle: { backgroundColor: colors.bg },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ size, color, focused }) => (
-            <Ionicons
-              name={focused ? "home" : "home-outline"}
-              size={size}
-              color={color as string}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="activities"
-        options={{
-          title: "Activities",
-          tabBarIcon: ({ size, color, focused }) => (
-            <Ionicons
-              name={focused ? "list" : "list-outline"}
-              size={size}
-              color={color as string}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ size, color, focused }) => (
-            <Ionicons
-              name={focused ? "person" : "person-outline"}
-              size={size}
-              color={color as string}
-            />
-          ),
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: "Nearby" }} />
+      <Tabs.Screen name="activities" options={{ title: "Updates" }} />
+      <Tabs.Screen name="profile" options={{ title: "You" }} />
     </Tabs>
   );
 }

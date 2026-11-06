@@ -173,23 +173,7 @@ export default function ActivityScreen() {
         showsVerticalScrollIndicator={false}
       />
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => router.push("/report-incident")}
-        accessibilityRole="button"
-        accessibilityLabel="Report incident"
-      >
-        <Ionicons name="add" size={28} color="#FFFFFF" />
-      </TouchableOpacity>
 
-      <View
-        style={styles.fabLabel}
-        pointerEvents="none"
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      >
-        <Text style={styles.fabLabelText}>Report Incident</Text>
-      </View>
     </CustomSafeAreaView>
   );
 }

@@ -91,23 +91,7 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => router.push("/report-incident")}
-        accessibilityRole="button"
-        accessibilityLabel="Report incident"
-      >
-        <Ionicons name="add" size={28} color="#1A2A44" />
-      </TouchableOpacity>
 
-      <View
-        style={styles.fabLabel}
-        pointerEvents="none"
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      >
-        <Text style={styles.fabLabelText}>Report Incident</Text>
-      </View>
     </CustomSafeAreaView>
   );
 }
