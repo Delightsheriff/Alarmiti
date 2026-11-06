@@ -1,50 +1,44 @@
-# Welcome to your Expo app 👋
+# Alarmiti
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A concept UI for a neighbourhood-watch app: a feed of what's happening nearby, a quick way to report an incident, and a profile that lets you stay anonymous.
 
-## Get started
+> **UI only.** There is no backend, account system or network API. Every screen runs on local sample data, and anything you add (a report, a name, a photo) lives in memory until the app reloads. All neighbourhoods, handles and events are invented.
 
-1. Install dependencies
+## Screens
 
-   ```bash
-   npm install
-   ```
+| Screen | What it shows |
+| --- | --- |
+| **Home** | Incident feed with an urgent badge, time, place and reporter. Tap a card for its details. |
+| **Activities** | Compact list of recent reports with search across title, place, reporter and type. |
+| **Incident details** | Location, category, time, description and the attached photo. |
+| **Report incident** | Type picker, neighbourhood suggestions, description, and a photo from the camera or library. Submitting puts the report at the top of the feed. |
+| **Profile** | Anonymous mode on by default. Turn it off to show your name, edit it, and pick a profile photo. |
 
-2. Start the app
+The app opens straight onto the tabs. There is no sign-in or onboarding.
 
-   ```bash
-   npx expo start
-   ```
+## Stack
 
-In the output, you'll find options to open the app in a
+- Expo SDK 53, React Native 0.79 (New Architecture), React 19
+- expo-router with typed routes
+- expo-image and expo-image-picker
+- Manrope and Inter via `@expo-google-fonts`
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+The sample data is in [`data/sample.ts`](data/sample.ts), and the in-memory store that screens read from is in [`data/store.tsx`](data/store.tsx).
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Running it
 
 ```bash
-npm run reset-project
+npm install
+npx expo run:ios
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+`expo run:ios` builds a development client and opens it on the iOS Simulator. `npx expo run:android` does the same for an Android emulator. The current Expo Go app only runs the latest SDK, so use a development build.
 
-## Learn more
+Feed photos load from Pexels, which is the only thing the app fetches over the network.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Checks
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npm run typecheck
+npm run lint
+```
