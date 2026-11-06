@@ -1,0 +1,287 @@
+import { IconTile, SeverityBadge } from "@/components/ui/primitives";
+import { PressableScale } from "@/components/ui/PressableScale";
+import {
+  categories,
+  formatDistance,
+  formatRelativeTime,
+  Incident,
+  IncidentStatus,
+  statusLabels,
+} from "@/data/sample";
+import { useConfirmations, useSampleStore } from "@/data/store";
+import { colors, radius, severity, space, tint, type } from "@/theme/tokens";
+import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { StyleSheet, Text, View } from "react-native";
+
+const useOpenIncident = () => {
+  const router = useRouter();
+  return (id: string) =>
+    router.push({ pathname: "/incident-details", params: { id } });
+};
+
+const metaLine = (incident: Incident) =>
+  `${incident.location} · ${formatDistance(incident.distanceKm)} · ${formatRelativeTime(
+    incident.reportedAt
+  )}`;
+
+export function StatusTag({ status }: { status: IncidentStatus }) {
+  const color =
+    status === "resolved"
+      ? severity.low.color
+      : status === "monitoring"
+      ? severity.medium.color
+      : colors.textMuted;
+  return (
+    <View style={[styles.statusTag, { borderColor: tint(color, 0.4) }]}>
+      {status === "resolved" && (
+        <Ionicons name="checkmark" size={12} color={color} />
+      )}
+      <Text style={[type.caption, { color }]}>{statusLabels[status]}</Text>
+    </View>
+  );
+}
+
+export function ConfirmButton({ incident }: { incident: Incident }) {
+  const { toggleConfirm } = useSampleStore();
+  const { count, mine } = useConfirmations(incident);
+  return (
+    <PressableScale
+      haptic
+      scaleTo={0.94}
+      onPress={() => toggleConfirm(incident.id)}
+      accessibilityLabel={mine ? "Remove your confirmation" : "I saw this too"}
+      accessibilityState={{ selected: mine }}
+      style={[styles.confirm, mine && styles.confirmMine]}
+    >
+      <Ionicons
+        name={mine ? "checkmark-circle" : "checkmark-circle-outline"}
+        size={16}
+        color={mine ? colors.onAccent : colors.text}
+      />
+      <Text
+        style={[type.callout, { color: mine ? colors.onAccent : colors.text }]}
+      >
+        {mine ? "Confirmed" : "Confirm"} · {count}
+      </Text>
+    </PressableScale>
+  );
+}
+
+/** The top incident, full width with its photo behind the title. */
+export function IncidentHeroCard({ incident }: { incident: Incident }) {
+  const open = useOpenIncident();
+  const category = categories[incident.category];
+  return (
+    <PressableScale
+      scaleTo={0.98}
+      onPress={() => open(incident.id)}
+      accessibilityLabel={`${severity[incident.severity].label}: ${incident.title}`}
+      accessibilityHint="Opens the incident"
+      style={styles.hero}
+    >
+      {incident.image && (
+        <Image
+          source={incident.image}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          transition={200}
+        />
+      )}
+      <LinearGradient
+        colors={["rgba(8,12,20,0.05)", "rgba(8,12,20,0.35)", colors.scrim]}
+        locations={[0, 0.45, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={styles.heroTop}>
+        <SeverityBadge level={incident.severity} solid />
+        <View style={styles.heroCategory}>
+          <Ionicons name={category.icon} size={12} color={colors.text} />
+          <Text style={[type.caption, { color: colors.text }]}>
+            {category.short}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.heroBottom}>
+        <Text style={[type.title, { color: colors.text }]} numberOfLines={2}>
+          {incident.title}
+        </Text>
+        <Text style={[type.callout, { color: "rgba(245,247,250,0.8)" }]}>
+          {metaLine(incident)}
+        </Text>
+      </View>
+    </PressableScale>
+  );
+}
+
+/** A feed card: photo first when there is one, otherwise a compact card. */
+export function IncidentCard({ incident }: { incident: Incident }) {
+  const open = useOpenIncident();
+  const category = categories[incident.category];
+  return (
+    <PressableScale
+      scaleTo={0.98}
+      onPress={() => open(incident.id)}
+      accessibilityLabel={incident.title}
+      accessibilityHint="Opens the incident"
+      style={styles.card}
+    >
+      {incident.image ? (
+        <View>
+          <Image
+            source={incident.image}
+            style={styles.cardImage}
+            contentFit="cover"
+            transition={200}
+          />
+          <View style={styles.cardImageBadge}>
+            <SeverityBadge level={incident.severity} solid />
+          </View>
+        </View>
+      ) : null}
+      <View style={styles.cardBody}>
+        <View style={styles.cardTitleRow}>
+          {!incident.image && (
+            <IconTile icon={category.icon} level={incident.severity} size={40} />
+          )}
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text style={[type.headline, { color: colors.text }]} numberOfLines={2}>
+              {incident.title}
+            </Text>
+            <Text style={[type.caption, { color: colors.textMuted }]}>
+              {metaLine(incident)}
+            </Text>
+          </View>
+        </View>
+        <Text
+          style={[type.callout, { color: colors.textMuted }]}
+          numberOfLines={2}
+        >
+          {incident.description}
+        </Text>
+        <View style={styles.cardActions}>
+          <ConfirmButton incident={incident} />
+          <StatusTag status={incident.status} />
+        </View>
+      </View>
+    </PressableScale>
+  );
+}
+
+/** A compact list row for timelines and the profile. */
+export function IncidentRow({ incident }: { incident: Incident }) {
+  const open = useOpenIncident();
+  const category = categories[incident.category];
+  return (
+    <PressableScale
+      scaleTo={0.98}
+      onPress={() => open(incident.id)}
+      accessibilityLabel={`${category.label}: ${incident.title}, ${statusLabels[incident.status]}`}
+      style={styles.row}
+    >
+      <IconTile icon={category.icon} level={incident.severity} />
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={[type.callout, styles.rowTitle]} numberOfLines={1}>
+          {incident.title}
+        </Text>
+        <Text style={[type.caption, { color: colors.textMuted }]} numberOfLines={1}>
+          {incident.location} · {formatRelativeTime(incident.reportedAt)}
+        </Text>
+      </View>
+      <StatusTag status={incident.status} />
+    </PressableScale>
+  );
+}
+
+const styles = StyleSheet.create({
+  statusTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+  },
+  confirm: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    height: 34,
+    paddingHorizontal: 12,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceRaised,
+  },
+  confirmMine: {
+    backgroundColor: colors.accent,
+  },
+  hero: {
+    height: 300,
+    marginHorizontal: space.gutter,
+    borderRadius: radius.lg,
+    overflow: "hidden",
+    backgroundColor: colors.surface,
+    justifyContent: "space-between",
+  },
+  heroTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.sm,
+    padding: space.lg,
+  },
+  heroCategory: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.glass,
+  },
+  heroBottom: {
+    padding: space.xl,
+    gap: 6,
+  },
+  card: {
+    marginHorizontal: space.gutter,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    overflow: "hidden",
+  },
+  cardImage: {
+    height: 180,
+    width: "100%",
+  },
+  cardImageBadge: {
+    position: "absolute",
+    top: space.md,
+    left: space.md,
+  },
+  cardBody: {
+    padding: space.lg,
+    gap: space.md,
+  },
+  cardTitleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: space.md,
+  },
+  cardActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.md,
+    paddingVertical: space.md,
+    paddingHorizontal: space.gutter,
+  },
+  rowTitle: {
+    color: colors.text,
+    fontFamily: "Inter-SemiBold",
+  },
+});
