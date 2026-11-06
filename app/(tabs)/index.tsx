@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, {
+  FadeIn,
   FadeInDown,
   FadeOut,
   LinearTransition,
@@ -35,6 +36,9 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { incidents, profile } = useSampleStore();
   const [filter, setFilter] = useState<Filter>("all");
+  // The staggered entrance is for the first load only. Cards that appear after
+  // a filter change just fade in, so switching filters stays quick.
+  const [hasFiltered, setHasFiltered] = useState(false);
 
   const visible = incidents.filter(
     (incident) => filter === "all" || incident.category === filter,
@@ -115,7 +119,10 @@ export default function HomeScreen() {
             key={key}
             label={label}
             selected={filter === key}
-            onPress={() => setFilter(key)}
+            onPress={() => {
+              setFilter(key);
+              setHasFiltered(true);
+            }}
           />
         ))}
       </ScrollView>
@@ -140,7 +147,13 @@ export default function HomeScreen() {
           {feed.map((incident, index) => (
             <Animated.View
               key={incident.id}
-              entering={FadeInDown.duration(320).delay(Math.min(index, 5) * 50)}
+              entering={
+                hasFiltered
+                  ? FadeIn.duration(150)
+                  : FadeInDown.duration(300)
+                      .delay(Math.min(index, 5) * 100)
+                      .withInitialValues({ transform: [{ translateY: 12 }] })
+              }
               exiting={FadeOut.duration(150)}
               layout={LinearTransition.duration(240)}
             >

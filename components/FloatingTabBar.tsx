@@ -50,11 +50,10 @@ export function FloatingTabBar({ state, emitter, navigateToTab }: TabBarProps) {
               return (
                 <Animated.View
                   key={route.key}
-                  layout={LinearTransition.duration(220)}
+                  layout={LinearTransition.duration(150)}
                 >
                   <PressableScale
                     haptic
-                    scaleTo={0.92}
                     accessibilityRole="tab"
                     accessibilityLabel={tab.label}
                     accessibilityState={{ selected: focused }}
@@ -77,7 +76,7 @@ export function FloatingTabBar({ state, emitter, navigateToTab }: TabBarProps) {
                     />
                     {focused && (
                       <Animated.Text
-                        entering={FadeIn.duration(180)}
+                        entering={FadeIn.duration(150)}
                         style={[type.callout, styles.tabLabel]}
                       >
                         {tab.label}
@@ -93,7 +92,6 @@ export function FloatingTabBar({ state, emitter, navigateToTab }: TabBarProps) {
 
       <PressableScale
         haptic
-        scaleTo={0.9}
         accessibilityLabel="Report an incident"
         onPress={() => router.push("/report-incident")}
         style={[styles.report, shadow]}
