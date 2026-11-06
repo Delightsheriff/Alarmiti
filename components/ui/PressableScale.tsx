@@ -14,7 +14,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-const PRESS = { duration: 140, easing: Easing.out(Easing.quad) };
+const PRESS = { duration: 150, easing: Easing.out(Easing.quad) };
 
 type Props = Omit<PressableProps, "style"> & {
   style?: StyleProp<ViewStyle>;
@@ -27,7 +27,7 @@ type Props = Omit<PressableProps, "style"> & {
 /** Every tappable surface: shrinks slightly while held, or dims under reduced motion. */
 export function PressableScale({
   haptic,
-  scaleTo = 0.97,
+  scaleTo = 0.96,
   disabled,
   onPressIn,
   onPressOut,
