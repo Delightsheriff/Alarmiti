@@ -49,7 +49,16 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="report-incident" />
+          <Stack.Screen
+            name="report-incident"
+            options={{
+              presentation: "formSheet",
+              sheetAllowedDetents: [0.93],
+              sheetGrabberVisible: true,
+              sheetCornerRadius: 28,
+              contentStyle: { backgroundColor: colors.surface },
+            }}
+          />
           <Stack.Screen name="incident-details" />
           <Stack.Screen name="+not-found" />
         </Stack>

@@ -1,4 +1,4 @@
-import CustomSafeAreaView from "@/components/custom-safe-area-view";
+import { PressableScale } from "@/components/ui/PressableScale";
 import {
   categories,
   IncidentCategory,
@@ -7,66 +7,72 @@ import {
 } from "@/data/sample";
 import { useSampleStore } from "@/data/store";
 import { showToast } from "@/lib/toast";
+import { colors, radius, severity, space, tint, type } from "@/theme/tokens";
 import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import {
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ReportIncidentScreen() {
   const router = useRouter();
-  const { addIncident } = useSampleStore();
-  const [selectedType, setSelectedType] = useState<IncidentCategory | null>(
-    null
-  );
-  const [isTypeListOpen, setIsTypeListOpen] = useState(false);
-  const [location, setLocation] = useState("");
-  const [isLocationPicked, setIsLocationPicked] = useState(false);
+  const insets = useSafeAreaInsets();
+  const { addIncident, profile } = useSampleStore();
+  const [category, setCategory] = useState<IncidentCategory | null>(null);
+  const [location, setLocation] = useState(profile.region);
+  const [isLocationPicked, setIsLocationPicked] = useState(true);
   const [description, setDescription] = useState("");
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [urgent, setUrgent] = useState(false);
+  const [anonymous, setAnonymous] = useState(profile.isAnonymous);
 
   const locationQuery = location.trim().toLowerCase();
   const locationSuggestions =
     isLocationPicked || locationQuery.length === 0
       ? []
       : neighbourhoods.filter((name) =>
-          name.toLowerCase().includes(locationQuery)
+          name.toLowerCase().includes(locationQuery),
         );
+  const ready = Boolean(category && location.trim() && description.trim());
 
-  const handleLocationChange = (text: string) => {
-    setLocation(text);
-    // Typing again means the earlier pick no longer applies.
-    setIsLocationPicked(false);
-  };
-
-  const handleLocationSelect = (name: string) => {
+  const pickLocation = (name: string) => {
     setLocation(name);
     setIsLocationPicked(true);
   };
 
-  const handleSelectType = (type: IncidentCategory) => {
-    setSelectedType(type);
-    setIsTypeListOpen(false);
-  };
-
-  const handleTakePhoto = async () => {
+  const addPhoto = async (source: "camera" | "library") => {
     try {
-      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      const permission =
+        source === "camera"
+          ? await ImagePicker.requestCameraPermissionsAsync()
+          : await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permission.status !== "granted") {
-        showToast("error", "Please allow camera access.");
+        showToast(
+          "error",
+          source === "camera"
+            ? "Please allow camera access."
+            : "Please allow photo library access.",
+        );
         return;
       }
-      const result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
+      const result =
+        source === "camera"
+          ? await ImagePicker.launchCameraAsync({ quality: 0.8 })
+          : await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ["images"],
+              quality: 0.8,
+            });
       if (!result.canceled && result.assets.length > 0) {
         setPhotoUri(result.assets[0].uri);
       }
@@ -75,402 +81,524 @@ export default function ReportIncidentScreen() {
     }
   };
 
-  const handleUploadPhoto = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (permission.status !== "granted") {
-      showToast("error", "Please allow photo library access.");
+  const submit = () => {
+    if (!category || !ready) {
+      showToast("error", "Add a type, place and description first.");
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets.length > 0) {
-      setPhotoUri(result.assets[0].uri);
-    }
-  };
-
-  const handleSubmit = () => {
-    if (!selectedType || !location.trim() || !description.trim()) {
-      showToast("error", "Add a type, location and description first.");
-      return;
-    }
-
-    addIncident({
-      category: selectedType,
+    const created = addIncident({
+      category,
       description: description.trim(),
       location: location.trim(),
-      urgent: false,
-      anonymous: true,
+      urgent,
+      anonymous,
       image: photoUri ? { uri: photoUri } : undefined,
     });
-    showToast("success", "Report shared with your neighbours");
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.back();
+    showToast("success", "Shared with your neighbours", {
+      detail: "Tap to view your report",
+      onPress: () =>
+        router.push({
+          pathname: "/incident-details",
+          params: { id: created.id },
+        }),
+    });
   };
 
   return (
-    <CustomSafeAreaView>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-      >
+    // One non-collapsable root, so the form sheet doesn't try to lay out the
+    // header and scroll view itself.
+    <View style={styles.screen} collapsable={false}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
+          <Text
+            style={[type.title, { color: colors.text }]}
+            accessibilityRole="header"
           >
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle} accessibilityRole="header">
-            Report Incident
+            Report something
           </Text>
-          <View style={styles.placeholder} />
+          <PressableScale
+            onPress={() => router.back()}
+            accessibilityLabel="Close"
+            style={styles.close}
+          >
+            <Ionicons name="close" size={20} color={colors.text} />
+          </PressableScale>
         </View>
 
         <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
         >
-          <View style={styles.formContainer}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Select Incident Type</Text>
-              <TouchableOpacity
-                style={styles.dropdown}
-                onPress={() => setIsTypeListOpen(!isTypeListOpen)}
-                accessibilityRole="button"
-                accessibilityLabel={`Incident type: ${
-                  selectedType ? categories[selectedType].label : "not chosen"
-                }`}
-                accessibilityState={{ expanded: isTypeListOpen }}
-              >
-                <Text
-                  style={[
-                    styles.dropdownText,
-                    !selectedType && styles.placeholderText,
-                  ]}
-                >
-                  {selectedType
-                    ? categories[selectedType].label
-                    : "Choose incident type"}
-                </Text>
-                <Ionicons
-                  name={isTypeListOpen ? "chevron-up" : "chevron-down"}
-                  size={20}
-                  color="#B0B8C4"
-                />
-              </TouchableOpacity>
-
-              {isTypeListOpen && (
-                <View style={styles.optionList}>
-                  {reportableCategories.map((type) => (
-                    <TouchableOpacity
-                      key={type}
-                      style={styles.optionItem}
-                      onPress={() => handleSelectType(type)}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: type === selectedType }}
+          <Step number={1} title="What's happening?">
+            <View style={styles.grid}>
+              {reportableCategories.map((key) => {
+                const item = categories[key];
+                const { color } = severity[item.severity];
+                const selected = key === category;
+                return (
+                  <PressableScale
+                    key={key}
+                    haptic
+                    onPress={() => setCategory(key)}
+                    accessibilityLabel={item.label}
+                    accessibilityState={{ selected }}
+                    style={[
+                      styles.tile,
+                      selected && {
+                        borderColor: color,
+                        backgroundColor: tint(color, 0.12),
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.tileIcon,
+                        { backgroundColor: tint(color) },
+                      ]}
                     >
-                      <Ionicons
-                        name={categories[type].icon}
-                        size={18}
-                        color="#B0B8C4"
-                      />
-                      <Text style={styles.optionText}>
-                        {categories[type].label}
-                      </Text>
-                      {type === selectedType && (
-                        <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
+                      <Ionicons name={item.icon} size={18} color={color} />
+                    </View>
+                    <Text
+                      style={[type.callout, styles.strong, { flex: 1 }]}
+                      numberOfLines={2}
+                    >
+                      {item.label}
+                    </Text>
+                  </PressableScale>
+                );
+              })}
             </View>
+          </Step>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Location</Text>
+          <Step number={2} title="Where?">
+            <PressableScale
+              onPress={() => pickLocation(profile.region)}
+              accessibilityState={{ selected: location === profile.region }}
+              style={[
+                styles.areaChip,
+                location === profile.region && styles.areaChipSelected,
+              ]}
+            >
+              <Ionicons
+                name="navigate"
+                size={14}
+                color={
+                  location === profile.region ? colors.onAccent : colors.text
+                }
+              />
+              <Text
+                style={[
+                  type.callout,
+                  {
+                    color:
+                      location === profile.region
+                        ? colors.onAccent
+                        : colors.text,
+                  },
+                ]}
+              >
+                Use my area ({profile.region})
+              </Text>
+            </PressableScale>
+            <View style={styles.field}>
+              <Ionicons name="search" size={18} color={colors.textMuted} />
               <TextInput
-                style={styles.textInput}
-                placeholder="Search your neighbourhood"
-                placeholderTextColor="#B0B8C4"
+                style={[type.body, styles.input]}
+                placeholder="Search a street or area"
+                placeholderTextColor={colors.textFaint}
                 value={location}
-                onChangeText={handleLocationChange}
+                onChangeText={(text) => {
+                  setLocation(text);
+                  // Typing again means the earlier pick no longer applies.
+                  setIsLocationPicked(false);
+                }}
                 autoCapitalize="words"
                 autoCorrect={false}
                 accessibilityLabel="Location"
               />
-              {locationSuggestions.length > 0 && (
-                <View style={styles.optionList}>
-                  {locationSuggestions.map((name) => (
-                    <TouchableOpacity
-                      key={name}
-                      style={styles.optionItem}
-                      onPress={() => handleLocationSelect(name)}
-                      accessibilityRole="button"
-                    >
-                      <Ionicons name="location" size={18} color="#B0B8C4" />
-                      <Text style={styles.optionText}>{name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
             </View>
+            {locationSuggestions.length > 0 && (
+              <View style={styles.suggestions}>
+                {locationSuggestions.map((name) => (
+                  <PressableScale
+                    key={name}
+                    scaleTo={0.99}
+                    onPress={() => pickLocation(name)}
+                    style={styles.suggestion}
+                  >
+                    <Ionicons
+                      name="location-outline"
+                      size={16}
+                      color={colors.textMuted}
+                    />
+                    <Text style={[type.callout, { color: colors.text }]}>
+                      {name}
+                    </Text>
+                  </PressableScale>
+                ))}
+              </View>
+            )}
+            <Text style={[type.caption, { color: colors.textFaint }]}>
+              Only the general area is shared, never an exact address.
+            </Text>
+          </Step>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Description</Text>
-              <TextInput
-                style={[styles.textInput, styles.textArea]}
-                placeholder="Describe what happened..."
-                placeholderTextColor="#B0B8C4"
-                value={description}
-                onChangeText={setDescription}
-                multiline
-                numberOfLines={6}
-                textAlignVertical="top"
-                accessibilityLabel="Description"
+          <Step number={3} title="Details">
+            <TextInput
+              style={[type.body, styles.field, styles.textArea]}
+              placeholder="What did you see? Avoid naming people."
+              placeholderTextColor={colors.textFaint}
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              textAlignVertical="top"
+              accessibilityLabel="Description"
+            />
+
+            {photoUri ? (
+              <View>
+                <Image
+                  source={{ uri: photoUri }}
+                  style={styles.photo}
+                  contentFit="cover"
+                  accessibilityLabel="Attached photo"
+                />
+                <PressableScale
+                  onPress={() => setPhotoUri(null)}
+                  accessibilityLabel="Remove photo"
+                  style={styles.removePhoto}
+                >
+                  <Ionicons name="close" size={16} color={colors.text} />
+                </PressableScale>
+              </View>
+            ) : (
+              <View style={styles.photoRow}>
+                <PhotoButton
+                  icon="camera"
+                  label="Camera"
+                  onPress={() => addPhoto("camera")}
+                />
+                <PhotoButton
+                  icon="images"
+                  label="Library"
+                  onPress={() => addPhoto("library")}
+                />
+              </View>
+            )}
+
+            <View style={styles.toggles}>
+              <ToggleRow
+                icon="alert-circle"
+                iconColor={severity.urgent.color}
+                title="Urgent"
+                detail="Someone could get hurt right now. Neighbours nearby get an alert."
+                value={urgent}
+                onChange={setUrgent}
+              />
+              <View style={styles.divider} />
+              <ToggleRow
+                icon="eye-off"
+                iconColor={colors.textMuted}
+                title="Post anonymously"
+                detail={`Neighbours see “${profile.username}”.`}
+                value={anonymous}
+                onChange={setAnonymous}
               />
             </View>
-
-            <View style={styles.mediaSection}>
-              <Text style={styles.inputLabel}>Add Media</Text>
-              {photoUri ? (
-                <View style={styles.preview}>
-                  <Image
-                    source={{ uri: photoUri }}
-                    style={styles.previewImage}
-                    contentFit="cover"
-                    accessibilityLabel="Attached photo"
-                  />
-                  <TouchableOpacity
-                    style={styles.removePhoto}
-                    onPress={() => setPhotoUri(null)}
-                    accessibilityRole="button"
-                    accessibilityLabel="Remove photo"
-                  >
-                    <Ionicons name="close" size={18} color="#FFFFFF" />
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <View style={styles.mediaButtons}>
-                  <TouchableOpacity
-                    style={styles.mediaButton}
-                    onPress={handleTakePhoto}
-                    accessibilityRole="button"
-                  >
-                    <Ionicons name="camera" size={24} color="#1A2A44" />
-                    <Text style={styles.mediaButtonText}>Take Photo</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.mediaButton}
-                    onPress={handleUploadPhoto}
-                    accessibilityRole="button"
-                  >
-                    <Ionicons name="cloud-upload" size={24} color="#1A2A44" />
-                    <Text style={styles.mediaButtonText}>Upload</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-              <Text style={styles.mediaHint}>
-                Add visual evidence to support your report.
-              </Text>
-            </View>
-          </View>
+          </Step>
         </ScrollView>
 
-        <View style={styles.bottomSection}>
-          <TouchableOpacity
-            style={styles.submitButton}
-            onPress={handleSubmit}
-            accessibilityRole="button"
+        <View
+          style={[
+            styles.footer,
+            { paddingBottom: Math.max(insets.bottom, space.lg) },
+          ]}
+        >
+          <PressableScale
+            haptic
+            onPress={submit}
+            accessibilityState={{ disabled: !ready }}
+            style={[styles.submit, !ready && styles.submitIdle]}
           >
-            <Text style={styles.submitButtonText}>Submit Report</Text>
-          </TouchableOpacity>
+            <Ionicons
+              name="paper-plane"
+              size={18}
+              color={ready ? colors.onAccent : colors.textMuted}
+            />
+            <Text
+              style={[
+                type.callout,
+                styles.strong,
+                { color: ready ? colors.onAccent : colors.textMuted },
+              ]}
+            >
+              Share with neighbours
+            </Text>
+          </PressableScale>
         </View>
       </KeyboardAvoidingView>
-    </CustomSafeAreaView>
+    </View>
+  );
+}
+
+function Step({
+  number,
+  title,
+  children,
+}: {
+  number: number;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <View style={styles.step}>
+      <View style={styles.stepHeader}>
+        <View style={styles.stepNumber}>
+          <Text style={[type.caption, { color: colors.accent }]}>{number}</Text>
+        </View>
+        <Text style={[type.headline, { color: colors.text }]}>{title}</Text>
+      </View>
+      {children}
+    </View>
+  );
+}
+
+function PhotoButton({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: "camera" | "images";
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <PressableScale onPress={onPress} style={styles.photoButton}>
+      <Ionicons name={icon} size={20} color={colors.text} />
+      <Text style={[type.callout, { color: colors.text }]}>{label}</Text>
+    </PressableScale>
+  );
+}
+
+function ToggleRow({
+  icon,
+  iconColor,
+  title,
+  detail,
+  value,
+  onChange,
+}: {
+  icon: "alert-circle" | "eye-off";
+  iconColor: string;
+  title: string;
+  detail: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <View style={styles.toggleRow}>
+      <Ionicons name={icon} size={20} color={iconColor} />
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={[type.callout, styles.strong]}>{title}</Text>
+        <Text style={[type.caption, { color: colors.textMuted }]}>
+          {detail}
+        </Text>
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ false: colors.surfaceRaised, true: colors.accent }}
+        accessibilityLabel={title}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  keyboardView: {
+  screen: {
     flex: 1,
+    backgroundColor: colors.surface,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 24,
+    paddingHorizontal: space.gutter,
+    paddingTop: space.xxl,
+    paddingBottom: space.sm,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+  close: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surfaceRaised,
     alignItems: "center",
     justifyContent: "center",
   },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: "Manrope-SemiBold",
-    color: "#FFFFFF",
+  content: {
+    paddingHorizontal: space.gutter,
+    paddingTop: space.lg,
+    paddingBottom: space.xxxl,
+    gap: space.xxxl,
   },
-  placeholder: {
-    width: 40,
+  step: {
+    gap: space.md,
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 20,
-  },
-  formContainer: {
-    paddingHorizontal: 24,
-  },
-  inputGroup: {
-    marginBottom: 24,
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontFamily: "Inter-Medium",
-    color: "#FFFFFF",
-    marginBottom: 8,
-  },
-  dropdown: {
+  stepHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    gap: space.sm,
+    marginBottom: space.xs,
+  },
+  stepNumber: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: tint(colors.accent, 0.14),
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: space.sm,
+  },
+  tile: {
+    width: "48.8%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.sm,
+    padding: space.md,
+    minHeight: 64,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+  },
+  tileIcon: {
+    width: 36,
+    height: 36,
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  strong: {
+    color: colors.text,
+    fontFamily: "Inter-SemiBold",
+  },
+  areaChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 6,
+    height: 36,
+    paddingHorizontal: 14,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceRaised,
+  },
+  areaChipSelected: {
+    backgroundColor: colors.accent,
+  },
+  field: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.sm,
     minHeight: 52,
+    paddingHorizontal: space.lg,
+    borderRadius: radius.md,
+    backgroundColor: colors.bg,
+    color: colors.text,
   },
-  dropdownText: {
-    fontSize: 16,
-    fontFamily: "Inter-Regular",
-    color: "#FFFFFF",
+  input: {
+    flex: 1,
+    color: colors.text,
+    paddingVertical: space.md,
   },
-  placeholderText: {
-    color: "#B0B8C4",
-  },
-  optionList: {
-    marginTop: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
+  suggestions: {
+    borderRadius: radius.md,
+    backgroundColor: colors.bg,
     overflow: "hidden",
   },
-  optionItem: {
+  suggestion: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(255, 255, 255, 0.1)",
-  },
-  optionText: {
-    flex: 1,
-    fontSize: 15,
-    fontFamily: "Inter-Regular",
-    color: "#FFFFFF",
-  },
-  textInput: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    fontSize: 16,
-    fontFamily: "Inter-Regular",
-    color: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-    minHeight: 52,
+    gap: space.sm,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
   },
   textArea: {
     minHeight: 120,
-    paddingTop: 16,
+    paddingTop: space.md,
+    paddingBottom: space.md,
   },
-  mediaSection: {
-    marginBottom: 24,
-  },
-  mediaButtons: {
+  photoRow: {
     flexDirection: "row",
-    gap: 12,
-    marginBottom: 12,
+    gap: space.sm,
   },
-  mediaButton: {
+  photoButton: {
     flex: 1,
+    height: 56,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
+    gap: space.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: "rgba(255,255,255,0.18)",
   },
-  mediaButtonText: {
-    fontSize: 14,
-    fontFamily: "Inter-SemiBold",
-    color: "#1A2A44",
-  },
-  preview: {
-    position: "relative",
-    marginBottom: 12,
-  },
-  previewImage: {
-    width: "100%",
+  photo: {
     height: 180,
-    borderRadius: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: radius.md,
   },
   removePhoto: {
     position: "absolute",
-    top: 8,
-    right: 8,
+    top: space.sm,
+    right: space.sm,
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backgroundColor: colors.scrim,
     alignItems: "center",
     justifyContent: "center",
   },
-  mediaHint: {
-    fontSize: 12,
-    fontFamily: "Inter-Regular",
-    color: "#B0B8C4",
-    textAlign: "center",
+  toggles: {
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceRaised,
+    paddingHorizontal: space.lg,
   },
-  bottomSection: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255, 255, 255, 0.1)",
-  },
-  submitButton: {
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 18,
-    borderRadius: 16,
+  toggleRow: {
+    flexDirection: "row",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    gap: space.md,
+    paddingVertical: space.lg,
   },
-  submitButtonText: {
-    fontSize: 18,
-    fontFamily: "Inter-SemiBold",
-    color: "#1A2A44",
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.hairline,
+  },
+  footer: {
+    paddingHorizontal: space.gutter,
+    paddingTop: space.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.hairline,
+    backgroundColor: colors.surface,
+  },
+  submit: {
+    height: 54,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accent,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: space.sm,
+  },
+  submitIdle: {
+    backgroundColor: colors.surfaceRaised,
   },
 });
