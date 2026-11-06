@@ -13,6 +13,11 @@ import { colors, space, TAB_BAR_CLEARANCE, type } from "@/theme/tokens";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  FadeInDown,
+  FadeOut,
+  LinearTransition,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Filter = "all" | IncidentCategory;
@@ -32,13 +37,13 @@ export default function HomeScreen() {
   const [filter, setFilter] = useState<Filter>("all");
 
   const visible = incidents.filter(
-    (incident) => filter === "all" || incident.category === filter
+    (incident) => filter === "all" || incident.category === filter,
   );
   const hero = visible.find(
     (incident) =>
       incident.image &&
       incident.status !== "resolved" &&
-      (incident.severity === "urgent" || incident.severity === "high")
+      (incident.severity === "urgent" || incident.severity === "high"),
   );
   const feed = visible.filter((incident) => incident !== hero);
   // The latest unresolved reports, newest first.
@@ -60,7 +65,9 @@ export default function HomeScreen() {
           <PressableScale
             accessibilityLabel={`Neighbourhood: ${profile.region}`}
             accessibilityHint="Choosing a neighbourhood is not part of the concept"
-            onPress={() => showToast("info", "One neighbourhood in this concept")}
+            onPress={() =>
+              showToast("info", "One neighbourhood in this concept")
+            }
             style={styles.place}
           >
             <Ionicons name="location" size={14} color={colors.accent} />
@@ -78,7 +85,11 @@ export default function HomeScreen() {
         </View>
         <View style={styles.headerActions}>
           <IconButton icon="search" label="Search" />
-          <IconButton icon="notifications-outline" label="Notifications" badge />
+          <IconButton
+            icon="notifications-outline"
+            label="Notifications"
+            badge
+          />
         </View>
       </View>
 
@@ -126,8 +137,15 @@ export default function HomeScreen() {
           }
         />
         <View style={{ gap: space.lg }}>
-          {feed.map((incident) => (
-            <IncidentCard key={incident.id} incident={incident} />
+          {feed.map((incident, index) => (
+            <Animated.View
+              key={incident.id}
+              entering={FadeInDown.duration(320).delay(Math.min(index, 5) * 50)}
+              exiting={FadeOut.duration(150)}
+              layout={LinearTransition.duration(240)}
+            >
+              <IncidentCard incident={incident} />
+            </Animated.View>
           ))}
           {feed.length === 0 && (
             <Text style={[type.body, styles.empty]}>

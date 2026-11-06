@@ -1,13 +1,18 @@
 import { Link } from "expo-router";
+import { colors, type } from "@/theme/tokens";
 import { StyleSheet, Text, View } from "react-native";
 
 export default function NotFoundScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.text} accessibilityRole="header">
+      <Text style={[type.title, styles.text]} accessibilityRole="header">
         This screen doesn&apos;t exist.
       </Text>
-      <Link href="/" style={styles.link} accessibilityRole="link">
+      <Link
+        href="/"
+        style={[type.callout, styles.link]}
+        accessibilityRole="link"
+      >
         Go to the home screen
       </Link>
     </View>
@@ -20,18 +25,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 20,
-    backgroundColor: "#1A2A44",
+    backgroundColor: colors.bg,
   },
   text: {
-    fontSize: 20,
-    fontFamily: "Manrope-SemiBold",
-    color: "#FFFFFF",
+    color: colors.text,
   },
   link: {
-    marginTop: 15,
-    paddingVertical: 15,
-    fontSize: 16,
-    fontFamily: "Inter-Medium",
-    color: "#B0B8C4",
+    marginTop: 16,
+    paddingVertical: 16,
+    color: colors.accent,
   },
 });
