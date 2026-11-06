@@ -31,7 +31,7 @@ The redesign follows [docs/modernise.md](docs/modernise.md). Screenshots of the 
 
 ## Design system
 
-- **Tokens** in [`theme/tokens.ts`](theme/tokens.ts): a dark palette with one mint accent, five severity colours (Notice, Low, Medium, High, Urgent), a type scale (Manrope for headings, Inter for text), radii and spacing. Colour only shows up where it means something.
+- **Tokens** in [`theme/tokens.ts`](theme/tokens.ts): a light, monochrome palette where near-black is the accent and red is kept for alerts, five severity colours (Notice, Low, Medium, High, Urgent), a type scale (Manrope for headings, Inter for text), radii and spacing. Colour only shows up where it means something.
 - **Primitives** in [`components/ui`](components/ui): `PressableScale` (press scale plus optional haptic, dimming instead of scaling under Reduce Motion), `Chip`, `IconButton`, `SeverityBadge`, `IconTile` and `SectionHeader`.
 - **Incident components** in [`components/incident.tsx`](components/incident.tsx): hero card, feed card, list row, highlight tile, status tag and steps, confirm button and updates timeline.
 - **Floating tab bar** in [`components/FloatingTabBar.tsx`](components/FloatingTabBar.tsx): a blurred pill whose active tab widens to show its label, with the Report button beside it.

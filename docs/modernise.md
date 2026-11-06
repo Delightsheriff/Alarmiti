@@ -105,31 +105,36 @@ Which patterns fit, and which don't:
 
 Keep these in one `theme/` module (plain TypeScript constants) and stop hardcoding hex values.
 
-### Colour (dark-first, one accent)
+### Colour (light, mono, red for alerts)
+
+The first pass used a dark navy palette with a mint accent. It was replaced with a light, monochrome one: near-black does the job of an accent, and red is kept for alerts.
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `bg` | `#0E1624` | App background (deeper than the current navy) |
-| `surface` | `#172234` | Cards, sheets |
-| `surfaceRaised` | `#1F2C42` | Chips, inputs, tab bar pill |
-| `glass` | `rgba(255,255,255,0.12)` + blur | Icon buttons over imagery |
-| `text` | `#F5F7FA` | Primary text |
-| `textMuted` | `#9AA6B8` | Secondary text |
-| `hairline` | `rgba(255,255,255,0.08)` | Dividers only, not card borders |
-| `accent` | `#7CF2C8` (mint) | The brand accent: active tab, primary button, selected chip, links |
-| `onAccent` | `#062A1F` | Text on the accent |
+| `bg` | `#F4F4F1` | App background, a soft off-white |
+| `surface` | `#FFFFFF` | Cards, sheets |
+| `surfaceRaised` | `#EAEAE6` | Chips, inputs, secondary buttons |
+| `glass` | `rgba(255,255,255,0.72)` + blur | Icon buttons and the tab bar over content |
+| `text` | `#111113` | Primary text |
+| `textMuted` | `#5C5E63` | Secondary text |
+| `textFaint` | `#8E9096` | Hints, inactive steps |
+| `hairline` | `rgba(17,17,19,0.08)` | Dividers only, not card borders |
+| `accent` | `#111113` | Active tab, primary button, selected chip |
+| `onAccent` | `#FFFFFF` | Text on the accent |
+| `alert` | `#E5322D` | The Report button and urgent reports |
+| `onImage` | `#FFFFFF` | Text over photos, which keep a dark scrim |
 
 **Severity scale.** These colours only appear on badges, rings, pins and icon tiles, never as large fills.
 
 | Token | Value | Meaning |
 | --- | --- | --- |
-| `sevInfo` | `#7AA7FF` | Community notice, lost & found |
-| `sevLow` | `#7CF2C8` | Resolved or low (shares the accent) |
-| `sevMedium` | `#FFC857` | Suspicious, noise, vandalism |
-| `sevHigh` | `#FF8A5C` | Theft, safety hazard |
-| `sevUrgent` | `#FF5A6E` | Urgent |
+| `info` | `#6B6E75` | Community notice, lost & found |
+| `low` | `#2E9466` | Resolved or low |
+| `medium` | `#C98A0B` | Suspicious, noise, vandalism |
+| `high` | `#E0662E` | Theft, safety hazard |
+| `urgent` | `#E5322D` | Urgent (shares the alert red) |
 
-A light theme can follow later using the same token names.
+Fades over light content end in a transparent off-white (`rgba(244,244,241,0)`), not `transparent`, which is transparent black and leaves a grey band.
 
 ### Type
 
