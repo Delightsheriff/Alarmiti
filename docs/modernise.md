@@ -2,7 +2,7 @@
 
 This is a proposal, not an implementation. It looks at the concept app as it is on the `concept` branch and suggests how to bring it up to the standard of current consumer apps, using four reference designs: a social reels app, a social feed, a travel app and a news app.
 
-> **No screenshots.** The app builds for the iOS Simulator, but it won't launch on the only runtime installed here (iOS 27). That runtime rejects apps without the UIScene life cycle, and React Native 0.79 (Expo SDK 53) doesn't adopt it. Everything below comes from reading the screens' code. The SDK upgrade in the build order fixes this.
+> **Status:** written before the redesign, from reading the code, when the app could not launch on the iOS 27 Simulator under Expo SDK 53. Steps 1 to 8 of the build order below are now built on Expo SDK 58. From step 9, the list animations and the new screenshots are done; the shared-element transition, skeletons and the Map toggle are not. See [screenshots/before](screenshots/before) and [screenshots/after](screenshots/after).
 
 ## A. What exists now
 
