@@ -25,10 +25,10 @@ type IconName = ComponentProps<typeof Ionicons>["name"];
 // Anonymous avatars get a gradient picked from the handle, so the same
 // neighbour always looks the same without showing a face.
 const avatarGradients: [string, string][] = [
-  ["#7CF2C8", "#3B82F6"],
-  ["#FFC857", "#FF8A5C"],
-  ["#7AA7FF", "#A78BFA"],
-  ["#FF8A5C", "#FF5A6E"],
+  ["#3A3A3E", "#111113"],
+  ["#8E9096", "#3A3A3E"],
+  ["#F0533F", "#B3221E"],
+  ["#C9C9C4", "#6B6E75"],
 ];
 
 const hash = (handle: string) =>

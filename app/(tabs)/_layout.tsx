@@ -22,7 +22,7 @@ export default function TabLayout() {
       </Tabs>
       {/* Keeps the status bar readable over scrolled content. */}
       <LinearGradient
-        colors={[colors.bg, "rgba(14,22,36,0.6)", "transparent"]}
+        colors={[colors.bg, "rgba(244, 244, 241, 0.6)", "rgba(244, 244, 241, 0)"]}
         style={[styles.statusFade, { height: insets.top + 16 }]}
         pointerEvents="none"
       />

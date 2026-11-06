@@ -58,22 +58,22 @@ export function MapPreview({
 
 const styles = StyleSheet.create({
   map: {
-    backgroundColor: "#152031",
+    backgroundColor: "#ECECE8",
     overflow: "hidden",
   },
   street: {
     position: "absolute",
-    backgroundColor: "#22304A",
+    backgroundColor: "#FFFFFF",
   },
   block: {
     position: "absolute",
     borderRadius: 6,
-    backgroundColor: "#1A273B",
+    backgroundColor: "#E0E0DB",
   },
   park: {
     position: "absolute",
     borderRadius: 10,
-    backgroundColor: "rgba(124, 242, 200, 0.07)",
+    backgroundColor: "rgba(46, 148, 102, 0.12)",
   },
   center: {
     ...StyleSheet.absoluteFill,

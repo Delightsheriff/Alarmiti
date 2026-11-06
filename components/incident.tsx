@@ -108,10 +108,10 @@ export function IncidentHeroCard({ incident }: { incident: Incident }) {
         </View>
       </View>
       <View style={styles.heroBottom}>
-        <Text style={[type.title, { color: colors.text }]} numberOfLines={2}>
+        <Text style={[type.title, { color: colors.onImage }]} numberOfLines={2}>
           {incident.title}
         </Text>
-        <Text style={[type.callout, { color: "rgba(245,247,250,0.8)" }]}>
+        <Text style={[type.callout, { color: colors.onImageMuted }]}>
           {metaLine(incident)}
         </Text>
       </View>
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
     padding: 3,
   },
   reportRing: {
-    borderColor: "rgba(255,255,255,0.18)",
+    borderColor: "rgba(17,17,19,0.18)",
     borderStyle: "dashed",
   },
   highlightInner: {

@@ -68,7 +68,7 @@ export function IconButton({
       ]}
     >
       {variant === "glass" ? (
-        <BlurView intensity={30} tint="dark" style={styles.glassFill}>
+        <BlurView intensity={30} tint="light" style={styles.glassFill}>
           {content}
         </BlurView>
       ) : (

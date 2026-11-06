@@ -3,29 +3,37 @@ import { TextStyle } from "react-native";
 // Design tokens for the redesign (see docs/modernise.md). Screens read colour,
 // type, shape and spacing from here instead of hardcoding values.
 
+// Light and monochrome: ink black does the work of an accent (primary buttons,
+// selected chips, the active tab), and red is kept for alerts alone.
 export const colors = {
-  bg: "#0E1624",
-  surface: "#172234",
-  surfaceRaised: "#1F2C42",
-  glass: "rgba(255, 255, 255, 0.12)",
-  scrim: "rgba(8, 12, 20, 0.85)",
-  text: "#F5F7FA",
-  textMuted: "#9AA6B8",
-  textFaint: "#6B778A",
-  hairline: "rgba(255, 255, 255, 0.08)",
-  accent: "#7CF2C8",
-  onAccent: "#062A1F",
+  bg: "#F4F4F1",
+  surface: "#FFFFFF",
+  surfaceRaised: "#EAEAE6",
+  glass: "rgba(255, 255, 255, 0.72)",
+  scrim: "rgba(10, 10, 12, 0.82)",
+  text: "#111113",
+  textMuted: "#5C5E63",
+  textFaint: "#8E9096",
+  hairline: "rgba(17, 17, 19, 0.08)",
+  accent: "#111113",
+  onAccent: "#FFFFFF",
+  alert: "#E5322D",
+  onAlert: "#FFFFFF",
+  // Text and icons laid over photos, which stay dark behind a scrim.
+  onImage: "#FFFFFF",
+  onImageMuted: "rgba(255, 255, 255, 0.82)",
 } as const;
 
 export type Severity = "info" | "low" | "medium" | "high" | "urgent";
 
-// Severity colours only appear on badges, rings, pins and icon tiles.
+// Severity colours only appear on badges, rings, pins and icon tiles. The scale
+// stays quiet until it matters: grey and green, then amber, orange and alert red.
 export const severity: Record<Severity, { color: string; label: string }> = {
-  info: { color: "#7AA7FF", label: "Notice" },
-  low: { color: "#7CF2C8", label: "Low" },
-  medium: { color: "#FFC857", label: "Medium" },
-  high: { color: "#FF8A5C", label: "High" },
-  urgent: { color: "#FF5A6E", label: "Urgent" },
+  info: { color: "#6B6E75", label: "Notice" },
+  low: { color: "#2E9466", label: "Low" },
+  medium: { color: "#C98A0B", label: "Medium" },
+  high: { color: "#E0662E", label: "High" },
+  urgent: { color: "#E5322D", label: "Urgent" },
 };
 
 /** A severity colour at low opacity, for tile and chip backgrounds. */
@@ -74,7 +82,7 @@ export const space = {
 export const shadow = {
   shadowColor: "#000",
   shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.35,
+  shadowOpacity: 0.08,
   shadowRadius: 24,
   elevation: 12,
 } as const;

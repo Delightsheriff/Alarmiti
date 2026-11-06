@@ -62,7 +62,7 @@ export default function RootLayout() {
           <Stack.Screen name="incident-details" />
           <Stack.Screen name="+not-found" />
         </Stack>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
       </SampleStoreProvider>
       <Toast />
     </>

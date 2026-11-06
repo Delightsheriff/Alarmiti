@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: "rgba(255,255,255,0.18)",
+    borderColor: "rgba(17,17,19,0.18)",
   },
   photo: {
     height: 180,

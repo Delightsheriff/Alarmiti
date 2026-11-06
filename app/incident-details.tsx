@@ -76,7 +76,7 @@ function IncidentDetails({
             <MapPreview level={incident.severity} style={StyleSheet.absoluteFill} />
           )}
           <LinearGradient
-            colors={["rgba(14,22,36,0.55)", "transparent", "transparent", colors.bg]}
+            colors={["rgba(244,244,241,0.55)", "rgba(244,244,241,0)", "rgba(244,244,241,0)", colors.bg]}
             locations={[0, 0.3, 0.55, 1]}
             style={StyleSheet.absoluteFill}
             pointerEvents="none"
@@ -141,7 +141,7 @@ function IncidentDetails({
       </ScrollView>
 
       <LinearGradient
-        colors={[colors.bg, "rgba(14,22,36,0.7)", "transparent"]}
+        colors={[colors.bg, "rgba(244,244,241,0.7)", "rgba(244,244,241,0)"]}
         style={[styles.topFade, { height: insets.top + 100 }]}
         pointerEvents="none"
       />
@@ -171,7 +171,7 @@ function IncidentDetails({
 
       <BlurView
         intensity={40}
-        tint="dark"
+        tint="light"
         style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, space.lg) }]}
       >
         <PressableScale
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
     gap: space.md,
     paddingHorizontal: space.gutter,
     paddingTop: space.lg,
-    backgroundColor: "rgba(14, 22, 36, 0.7)",
+    backgroundColor: "rgba(255, 255, 255, 0.82)",
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.hairline,
   },
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     gap: space.sm,
   },
   primaryDone: {
-    backgroundColor: "rgba(124, 242, 200, 0.14)",
+    backgroundColor: "rgba(17, 17, 19, 0.06)",
   },
   secondary: {
     height: 52,

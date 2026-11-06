@@ -39,7 +39,7 @@ export function FloatingTabBar({ state, emitter, navigateToTab }: TabBarProps) {
         <View style={styles.pill}>
           <BlurView
             intensity={40}
-            tint="dark"
+            tint="light"
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.pillInner}>
@@ -98,7 +98,7 @@ export function FloatingTabBar({ state, emitter, navigateToTab }: TabBarProps) {
         onPress={() => router.push("/report-incident")}
         style={[styles.report, shadow]}
       >
-        <Ionicons name="add" size={30} color={colors.onAccent} />
+        <Ionicons name="add" size={30} color={colors.onAlert} />
       </PressableScale>
     </View>
   );
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: radius.pill,
     overflow: "hidden",
-    backgroundColor: "rgba(31, 44, 66, 0.82)",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.hairline,
   },
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.alert,
     alignItems: "center",
     justifyContent: "center",
   },
