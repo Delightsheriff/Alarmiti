@@ -272,6 +272,64 @@ export function UpdatesTimeline({ updates }: { updates: IncidentUpdate[] }) {
   );
 }
 
+/** A "Nearby now" tile: photo or icon inside a severity-coloured ring. */
+export function HighlightTile({ incident }: { incident: Incident }) {
+  const open = useOpenIncident();
+  const category = categories[incident.category];
+  const { color } = severity[incident.severity];
+  return (
+    <PressableScale
+      scaleTo={0.95}
+      onPress={() => open(incident.id)}
+      accessibilityLabel={`${severity[incident.severity].label}: ${incident.title}`}
+      style={styles.highlight}
+    >
+      <View style={[styles.highlightRing, { borderColor: color }]}>
+        <View style={[styles.highlightInner, { backgroundColor: tint(color) }]}>
+          {incident.image ? (
+            <Image
+              source={incident.image}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+            />
+          ) : (
+            <Ionicons name={category.icon} size={26} color={color} />
+          )}
+        </View>
+      </View>
+      <Text
+        style={[type.caption, { color: colors.textMuted, textAlign: "center" }]}
+        numberOfLines={1}
+      >
+        {category.short}
+      </Text>
+    </PressableScale>
+  );
+}
+
+/** The first tile in the highlights row. */
+export function ReportTile() {
+  const router = useRouter();
+  return (
+    <PressableScale
+      scaleTo={0.95}
+      haptic
+      onPress={() => router.push("/report-incident")}
+      accessibilityLabel="Report an incident"
+      style={styles.highlight}
+    >
+      <View style={[styles.highlightRing, styles.reportRing]}>
+        <View style={[styles.highlightInner, { backgroundColor: colors.surface }]}>
+          <Ionicons name="add" size={28} color={colors.accent} />
+        </View>
+      </View>
+      <Text style={[type.caption, { color: colors.text, textAlign: "center" }]}>
+        Report
+      </Text>
+    </PressableScale>
+  );
+}
+
 const styles = StyleSheet.create({
   statusTag: {
     flexDirection: "row",
@@ -397,5 +455,27 @@ const styles = StyleSheet.create({
     gap: 2,
     paddingTop: 4,
     paddingBottom: space.xl,
+  },
+  highlight: {
+    width: 76,
+    gap: 6,
+  },
+  highlightRing: {
+    width: 76,
+    height: 96,
+    borderRadius: 22,
+    borderWidth: 2,
+    padding: 3,
+  },
+  reportRing: {
+    borderColor: "rgba(255,255,255,0.18)",
+    borderStyle: "dashed",
+  },
+  highlightInner: {
+    flex: 1,
+    borderRadius: 17,
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

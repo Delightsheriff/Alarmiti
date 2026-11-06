@@ -1,328 +1,185 @@
-import CustomSafeAreaView from "@/components/custom-safe-area-view";
-import { Ionicons } from "@expo/vector-icons";
-import { categories, formatRelativeTime, Incident } from "@/data/sample";
+import { IncidentRow } from "@/components/incident";
+import { Chip } from "@/components/ui/primitives";
+import { PressableScale } from "@/components/ui/PressableScale";
+import { categories, dayLabel, Incident, IncidentStatus } from "@/data/sample";
 import { useSampleStore } from "@/data/store";
-import { useRouter } from "expo-router";
+import { colors, radius, space, TAB_BAR_CLEARANCE, type } from "@/theme/tokens";
+import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
-  FlatList,
+  ScrollView,
+  SectionList,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-export default function ActivityScreen() {
-  const router = useRouter();
-  const [isSearchActive, setIsSearchActive] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+type Filter = "all" | IncidentStatus;
+
+const filters: { key: Filter; label: string }[] = [
+  { key: "all", label: "Everything" },
+  { key: "open", label: "Open" },
+  { key: "monitoring", label: "Monitoring" },
+  { key: "resolved", label: "Resolved" },
+];
+
+/** Groups incidents under Today, Yesterday and weekday headers. */
+const groupByDay = (incidents: Incident[]) => {
+  const groups = new Map<string, Incident[]>();
+  for (const incident of incidents) {
+    const label = dayLabel(incident.reportedAt);
+    groups.set(label, [...(groups.get(label) ?? []), incident]);
+  }
+  return [...groups].map(([title, data]) => ({ title, data }));
+};
+
+export default function UpdatesScreen() {
+  const insets = useSafeAreaInsets();
   const { incidents } = useSampleStore();
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
 
-  const query = searchQuery.trim().toLowerCase();
-  const filteredActivities = incidents.filter((incident) =>
-    [
-      incident.title,
-      incident.reporter,
-      incident.location,
-      categories[incident.category].label,
-    ].some((field) => field.toLowerCase().includes(query))
+  const search = query.trim().toLowerCase();
+  const matches = incidents.filter(
+    (incident) =>
+      (filter === "all" || incident.status === filter) &&
+      [
+        incident.title,
+        incident.reporter,
+        incident.location,
+        categories[incident.category].label,
+      ].some((field) => field.toLowerCase().includes(search)),
   );
-
-  const handleSearchFocus = () => {
-    setIsSearchActive(true);
-  };
-
-  const handleSearchBlur = () => {
-    if (searchQuery === "") {
-      setIsSearchActive(false);
-    }
-  };
-
-  const clearSearch = () => {
-    setSearchQuery("");
-    setIsSearchActive(false);
-  };
-
-  const openSearch = () => {
-    setIsSearchActive(true);
-  };
-
-  const renderListHeader = () => (
-    <View>
-      {isSearchActive && (
-        <View style={styles.searchContainer}>
-          <View style={styles.searchBar}>
-            <Ionicons name="search" size={20} color="#B0B8C4" />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search activities..."
-              placeholderTextColor="#B0B8C4"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              onFocus={handleSearchFocus}
-              onBlur={handleSearchBlur}
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoFocus={true}
-              accessibilityLabel="Search activities"
-            />
-            <TouchableOpacity
-              onPress={clearSearch}
-              style={styles.clearButton}
-              accessibilityRole="button"
-              accessibilityLabel="Close search"
-            >
-              <Ionicons name="close-circle" size={20} color="#B0B8C4" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      {isSearchActive && searchQuery !== "" && (
-        <Text style={styles.searchResultsText}>
-          {filteredActivities.length} result
-          {filteredActivities.length !== 1 ? "s" : ""} for &quot;{searchQuery}
-          &quot;
-        </Text>
-      )}
-
-      {!isSearchActive && (
-        <Text style={styles.sectionTitle}>Recent Activity</Text>
-      )}
-    </View>
-  );
-
-  const renderEmptySearch = () => (
-    <View style={styles.emptySearchState}>
-      {searchQuery === "" ? (
-        <>
-          <Ionicons name="search" size={48} color="#B0B8C4" />
-          <Text style={styles.emptySearchTitle}>Search Activities</Text>
-          <Text style={styles.emptySearchDescription}>
-            Find specific activities, reports, or incidents
-          </Text>
-        </>
-      ) : (
-        <>
-          <Ionicons name="document-text-outline" size={48} color="#B0B8C4" />
-          <Text style={styles.emptySearchTitle}>No results found</Text>
-          <Text style={styles.emptySearchDescription}>
-            Try searching with different keywords
-          </Text>
-        </>
-      )}
-    </View>
-  );
-
-  const renderActivity = ({ item }: { item: Incident }) => (
-    <TouchableOpacity
-      style={styles.activityItem}
-      onPress={() =>
-        router.push({ pathname: "/incident-details", params: { id: item.id } })
-      }
-      accessibilityRole="button"
-      accessibilityLabel={`${categories[item.category].label}: ${item.title}`}
-      accessibilityHint="Opens the incident details"
-    >
-      <View style={styles.activityIcon}>
-        <Ionicons
-          name={categories[item.category].icon}
-          size={20}
-          color="#1A2A44"
-        />
-      </View>
-      <View style={styles.activityContent}>
-        <Text style={styles.activityTitle} numberOfLines={1}>
-          {item.title}
-        </Text>
-        <Text style={styles.activityMeta}>
-          {item.reporter} · {formatRelativeTime(item.reportedAt)}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
-
-  const dataToShow = isSearchActive ? filteredActivities : incidents;
+  const resolvedCount = incidents.filter(
+    (incident) => incident.status === "resolved",
+  ).length;
 
   return (
-    <CustomSafeAreaView>
+    <View style={[styles.screen, { paddingTop: insets.top + space.sm }]}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle} accessibilityRole="header">
-          Alarmiti
+        <Text
+          style={[type.display, { color: colors.text }]}
+          accessibilityRole="header"
+        >
+          Updates
         </Text>
-        {!isSearchActive && (
-          <TouchableOpacity
-            style={styles.settingsButton}
-            onPress={openSearch}
-            accessibilityRole="button"
-            accessibilityLabel="Search activities"
-          >
-            <Ionicons name="search" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        )}
+        <Text style={[type.callout, { color: colors.textMuted }]}>
+          Everything around you, including what got fixed. {resolvedCount}{" "}
+          {resolvedCount === 1 ? "report" : "reports"} resolved lately.
+        </Text>
+        <View style={styles.search}>
+          <Ionicons name="search" size={18} color={colors.textMuted} />
+          <TextInput
+            style={[type.body, styles.searchInput]}
+            placeholder="Search streets, types, neighbours"
+            placeholderTextColor={colors.textFaint}
+            value={query}
+            onChangeText={setQuery}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="search"
+            accessibilityLabel="Search updates"
+          />
+          {query.length > 0 && (
+            <PressableScale
+              onPress={() => setQuery("")}
+              accessibilityLabel="Clear search"
+            >
+              <Ionicons
+                name="close-circle"
+                size={18}
+                color={colors.textMuted}
+              />
+            </PressableScale>
+          )}
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filtersScroll}
+          contentContainerStyle={styles.filters}
+        >
+          {filters.map(({ key, label }) => (
+            <Chip
+              key={key}
+              label={label}
+              selected={filter === key}
+              onPress={() => setFilter(key)}
+            />
+          ))}
+        </ScrollView>
       </View>
 
-      <FlatList
-        data={dataToShow}
-        renderItem={renderActivity}
-        keyExtractor={(item) => item.id}
-        ListHeaderComponent={renderListHeader}
-        ListEmptyComponent={isSearchActive ? renderEmptySearch : undefined}
-        contentContainerStyle={styles.listContent}
+      <SectionList
+        sections={groupByDay(matches)}
+        keyExtractor={(incident) => incident.id}
+        renderItem={({ item }) => <IncidentRow incident={item} />}
+        renderSectionHeader={({ section }) => (
+          <View style={styles.dayHeader}>
+            <Text style={[type.overline, { color: colors.textFaint }]}>
+              {section.title}
+            </Text>
+          </View>
+        )}
+        stickySectionHeadersEnabled
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE }}
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Ionicons name="search" size={32} color={colors.textFaint} />
+            <Text style={[type.body, { color: colors.textMuted }]}>
+              No updates match that.
+            </Text>
+          </View>
+        }
       />
-
-
-    </CustomSafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  listContent: {
-    paddingBottom: 100,
+  screen: {
+    flex: 1,
+    backgroundColor: colors.bg,
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 24,
+    paddingHorizontal: space.gutter,
+    gap: space.md,
+    paddingBottom: space.sm,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontFamily: "Manrope-Bold",
-    color: "#FFFFFF",
-  },
-  settingsButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  searchContainer: {
-    paddingHorizontal: 24,
-    marginBottom: 16,
-  },
-  searchBar: {
+  search: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: "#FFFFFF",
+    gap: space.sm,
+    height: 48,
+    marginTop: space.sm,
+    paddingHorizontal: space.lg,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
-    fontFamily: "Inter-Regular",
-    color: "#FFFFFF",
-    marginLeft: 12,
+    color: colors.text,
   },
-  clearButton: {
-    padding: 4,
+  filtersScroll: {
+    marginHorizontal: -space.gutter,
   },
-  searchResultsText: {
-    fontSize: 14,
-    fontFamily: "Inter-Medium",
-    color: "#B0B8C4",
-    marginBottom: 16,
-    paddingHorizontal: 28,
+  filters: {
+    gap: space.sm,
+    paddingHorizontal: space.gutter,
   },
-  emptySearchState: {
+  dayHeader: {
+    paddingHorizontal: space.gutter,
+    paddingTop: space.xl,
+    paddingBottom: space.sm,
+    backgroundColor: colors.bg,
+  },
+  empty: {
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 80,
-    paddingHorizontal: 24,
-  },
-  emptySearchTitle: {
-    fontSize: 20,
-    fontFamily: "Manrope-SemiBold",
-    color: "#FFFFFF",
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptySearchDescription: {
-    fontSize: 16,
-    fontFamily: "Inter-Regular",
-    color: "#B0B8C4",
-    textAlign: "center",
-    lineHeight: 22,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontFamily: "Manrope-SemiBold",
-    color: "#FFFFFF",
-    marginBottom: 16,
-    paddingHorizontal: 24,
-  },
-  activityItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-    marginHorizontal: 24,
-    marginBottom: 12,
-  },
-  activityIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  activityContent: {
-    flex: 1,
-  },
-  activityTitle: {
-    fontSize: 16,
-    fontFamily: "Inter-SemiBold",
-    color: "#FFFFFF",
-    marginBottom: 4,
-  },
-  activityMeta: {
-    fontSize: 14,
-    fontFamily: "Inter-Regular",
-    color: "#B0B8C4",
-  },
-  fab: {
-    position: "absolute",
-    right: 24,
-    bottom: 100,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#007AFF",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  fabLabel: {
-    position: "absolute",
-    right: 24,
-    bottom: 50,
-    backgroundColor: "rgba(0, 0, 0, 0.8)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  fabLabelText: {
-    fontSize: 12,
-    fontFamily: "Inter-SemiBold",
-    color: "#FFFFFF",
+    gap: space.md,
+    paddingTop: space.xxxl * 2,
   },
 });

@@ -1,4 +1,9 @@
-import { IncidentCard, IncidentHeroCard } from "@/components/incident";
+import {
+  HighlightTile,
+  IncidentCard,
+  IncidentHeroCard,
+  ReportTile,
+} from "@/components/incident";
 import { Chip, IconButton, SectionHeader } from "@/components/ui/primitives";
 import { PressableScale } from "@/components/ui/PressableScale";
 import { greeting, IncidentCategory } from "@/data/sample";
@@ -36,6 +41,10 @@ export default function HomeScreen() {
       (incident.severity === "urgent" || incident.severity === "high")
   );
   const feed = visible.filter((incident) => incident !== hero);
+  // The latest unresolved reports, newest first.
+  const nearbyNow = incidents
+    .filter((incident) => incident.status !== "resolved")
+    .slice(0, 6);
 
   return (
     <ScrollView
@@ -72,6 +81,18 @@ export default function HomeScreen() {
           <IconButton icon="notifications-outline" label="Notifications" badge />
         </View>
       </View>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.highlights}
+        accessibilityLabel="Nearby now"
+      >
+        <ReportTile />
+        {nearbyNow.map((incident) => (
+          <HighlightTile key={incident.id} incident={incident} />
+        ))}
+      </ScrollView>
 
       <ScrollView
         horizontal
@@ -140,6 +161,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: space.sm,
     paddingBottom: 2,
+  },
+  highlights: {
+    gap: space.md,
+    paddingHorizontal: space.gutter,
+    paddingTop: space.xxl,
   },
   filters: {
     gap: space.sm,
