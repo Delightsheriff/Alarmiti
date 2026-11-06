@@ -4,8 +4,10 @@ import {
   categories,
   formatDistance,
   formatRelativeTime,
+  formatClockTime,
   Incident,
   IncidentStatus,
+  IncidentUpdate,
   statusLabels,
 } from "@/data/sample";
 import { useConfirmations, useSampleStore } from "@/data/store";
@@ -14,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { ComponentProps } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 const useOpenIncident = () => {
@@ -195,6 +198,80 @@ export function IncidentRow({ incident }: { incident: Incident }) {
   );
 }
 
+const statusOrder: IncidentStatus[] = ["open", "monitoring", "resolved"];
+
+/** Open → Monitoring → Resolved as three steps. */
+export function StatusSteps({ status }: { status: IncidentStatus }) {
+  const current = statusOrder.indexOf(status);
+  return (
+    <View
+      style={styles.steps}
+      accessible
+      accessibilityLabel={`Status: ${statusLabels[status]}`}
+    >
+      {statusOrder.map((step, index) => {
+        const reached = index <= current;
+        return (
+          <View key={step} style={{ flex: 1, gap: 6 }}>
+            <View
+              style={[
+                styles.stepBar,
+                reached && { backgroundColor: colors.accent },
+              ]}
+            />
+            <Text
+              style={[
+                type.caption,
+                { color: index === current ? colors.text : colors.textFaint },
+              ]}
+            >
+              {statusLabels[step]}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+const updateIcons: Record<IncidentUpdate["kind"], ComponentProps<typeof Ionicons>["name"]> = {
+  reported: "flag",
+  confirmed: "people",
+  official: "shield-checkmark",
+  resolved: "checkmark-done",
+};
+
+/** A vertical line of dots, oldest first. */
+export function UpdatesTimeline({ updates }: { updates: IncidentUpdate[] }) {
+  return (
+    <View>
+      {updates.map((update, index) => {
+        const last = index === updates.length - 1;
+        const color =
+          update.kind === "resolved" || update.kind === "official"
+            ? colors.accent
+            : colors.textMuted;
+        return (
+          <View key={index} style={styles.timelineRow}>
+            <View style={styles.timelineRail}>
+              <View style={[styles.timelineDot, { backgroundColor: tint(color, 0.18) }]}>
+                <Ionicons name={updateIcons[update.kind]} size={13} color={color} />
+              </View>
+              {!last && <View style={styles.timelineLine} />}
+            </View>
+            <View style={[styles.timelineBody, last && { paddingBottom: 0 }]}>
+              <Text style={[type.callout, { color: colors.text }]}>{update.text}</Text>
+              <Text style={[type.caption, { color: colors.textFaint }]}>
+                {formatClockTime(update.at)} · {formatRelativeTime(update.at)}
+              </Text>
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   statusTag: {
     flexDirection: "row",
@@ -283,5 +360,42 @@ const styles = StyleSheet.create({
   rowTitle: {
     color: colors.text,
     fontFamily: "Inter-SemiBold",
+  },
+  steps: {
+    flexDirection: "row",
+    gap: space.sm,
+  },
+  stepBar: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.surfaceRaised,
+  },
+  timelineRow: {
+    flexDirection: "row",
+    gap: space.md,
+  },
+  timelineRail: {
+    alignItems: "center",
+    width: 28,
+  },
+  timelineDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  timelineLine: {
+    flex: 1,
+    width: 2,
+    marginVertical: 4,
+    borderRadius: 1,
+    backgroundColor: colors.hairline,
+  },
+  timelineBody: {
+    flex: 1,
+    gap: 2,
+    paddingTop: 4,
+    paddingBottom: space.xl,
   },
 });

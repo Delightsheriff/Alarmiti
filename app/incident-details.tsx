@@ -1,260 +1,313 @@
-import CustomSafeAreaView from "@/components/custom-safe-area-view";
-import { categories, formatClockTime, formatRelativeTime } from "@/data/sample";
-import { useIncident } from "@/data/store";
+import { StatusSteps, UpdatesTimeline } from "@/components/incident";
+import { MapPreview } from "@/components/MapPreview";
+import { IconButton, SeverityBadge } from "@/components/ui/primitives";
+import { PressableScale } from "@/components/ui/PressableScale";
+import { categories, formatRelativeTime } from "@/data/sample";
+import { useConfirmations, useIncident, useSampleStore } from "@/data/store";
+import { showToast } from "@/lib/toast";
+import { colors, radius, space, type } from "@/theme/tokens";
 import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { useState } from "react";
+import { ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const HERO_HEIGHT = 340;
 
 export default function IncidentDetailsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const incident = useIncident(id);
 
-  return (
-    <CustomSafeAreaView>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle} accessibilityRole="header">
-          Incident Details
+  if (!incident) {
+    return (
+      <View style={[styles.missing, { paddingTop: insets.top }]}>
+        <Ionicons name="document-text-outline" size={48} color={colors.textMuted} />
+        <Text style={[type.body, { color: colors.textMuted }]}>
+          This incident isn&apos;t available.
         </Text>
-        <View style={styles.placeholder} />
+        <PressableScale onPress={() => router.back()} style={styles.secondary}>
+          <Text style={[type.callout, { color: colors.text }]}>Go back</Text>
+        </PressableScale>
       </View>
+    );
+  }
 
-      {!incident ? (
-        <View style={styles.missing}>
-          <Ionicons name="document-text-outline" size={48} color="#B0B8C4" />
-          <Text style={styles.missingText}>This incident isn&apos;t available.</Text>
+  return <IncidentDetails incident={incident} />;
+}
+
+function IncidentDetails({
+  incident,
+}: {
+  incident: NonNullable<ReturnType<typeof useIncident>>;
+}) {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { toggleConfirm } = useSampleStore();
+  const { count, mine } = useConfirmations(incident);
+  const [following, setFollowing] = useState(false);
+  const category = categories[incident.category];
+
+  const share = () =>
+    Share.share({
+      message: `${incident.title} · ${incident.location}. Shared from Alarmiti.`,
+    });
+
+  return (
+    <View style={styles.screen}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
+      >
+        <View style={{ height: HERO_HEIGHT }}>
+          {incident.image ? (
+            <Image
+              source={incident.image}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+              transition={200}
+              accessibilityLabel={`Photo attached to ${incident.title}`}
+            />
+          ) : (
+            <MapPreview level={incident.severity} style={StyleSheet.absoluteFill} />
+          )}
+          <LinearGradient
+            colors={["rgba(14,22,36,0.55)", "transparent", "transparent", colors.bg]}
+            locations={[0, 0.3, 0.55, 1]}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
+          <View style={styles.heroBadges}>
+            <SeverityBadge level={incident.severity} solid />
+            <View style={styles.categoryChip}>
+              <Ionicons name={category.icon} size={12} color={colors.text} />
+              <Text style={[type.caption, { color: colors.text }]}>
+                {category.label}
+              </Text>
+            </View>
+          </View>
         </View>
-      ) : (
-        <ScrollView
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.content}>
-            <View style={styles.locationSection}>
-              <Text style={styles.sectionTitle}>Location</Text>
-              <View style={styles.mapContainer}>
-                <View style={styles.mapPlaceholder}>
-                  <Ionicons name="location" size={32} color="#B0B8C4" />
-                  <Text style={styles.mapText}>{incident.location}</Text>
-                </View>
-              </View>
-            </View>
 
-            <View style={styles.incidentSection}>
-              <Text style={styles.sectionTitle}>Incident</Text>
-              <View style={styles.incidentCard}>
-                <View style={styles.categoryPill}>
-                  <Ionicons
-                    name={categories[incident.category].icon}
-                    size={14}
-                    color="#1A2A44"
-                  />
-                  <Text style={styles.categoryText}>
-                    {categories[incident.category].label}
-                  </Text>
-                </View>
-                <Text style={styles.incidentTitle}>{incident.title}</Text>
-                <View style={styles.incidentMeta}>
-                  <View style={styles.metaItem}>
-                    <Ionicons name="time" size={16} color="#B0B8C4" />
-                    <Text style={styles.metaText}>
-                      {formatClockTime(incident.reportedAt)} ·{" "}
-                      {formatRelativeTime(incident.reportedAt)}
-                    </Text>
-                  </View>
-                  <View style={styles.metaItem}>
-                    <Ionicons name="person" size={16} color="#B0B8C4" />
-                    <Text style={styles.metaText}>
-                      Reported by {incident.reporter}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </View>
+        <View style={styles.body}>
+          <View style={{ gap: space.sm }}>
+            <Text
+              style={[type.title, { color: colors.text }]}
+              accessibilityRole="header"
+            >
+              {incident.title}
+            </Text>
+            <Text style={[type.callout, { color: colors.textMuted }]}>
+              {incident.location} · {formatRelativeTime(incident.reportedAt)} ·{" "}
+              {incident.reporter}
+            </Text>
+          </View>
 
-            <View style={styles.descriptionSection}>
-              <Text style={styles.sectionTitle}>Description</Text>
-              <View style={styles.descriptionCard}>
-                <Text style={styles.descriptionText}>
-                  {incident.description}
+          <StatusSteps status={incident.status} />
+
+          <Text style={[type.body, { color: colors.text }]}>
+            {incident.description}
+          </Text>
+
+          <View style={styles.section}>
+            <Text style={[type.overline, { color: colors.textFaint }]}>
+              Updates
+            </Text>
+            <UpdatesTimeline updates={incident.updates} />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={[type.overline, { color: colors.textFaint }]}>
+              Where
+            </Text>
+            <View style={styles.locationCard}>
+              <MapPreview
+                level={incident.severity}
+                areaSize={96}
+                style={styles.locationMap}
+              />
+              <View style={styles.locationMeta}>
+                <Text style={[type.callout, styles.strong]}>{incident.location}</Text>
+                <Text style={[type.caption, { color: colors.textMuted }]}>
+                  Only the general area is shared, never an exact address.
                 </Text>
               </View>
             </View>
-
-            {incident.image && (
-              <View style={styles.mediaSection}>
-                <Text style={styles.sectionTitle}>Media</Text>
-                <Image
-                  source={incident.image}
-                  style={styles.mediaImage}
-                  contentFit="cover"
-                  transition={200}
-                  accessibilityLabel={`Photo attached to ${incident.title}`}
-                />
-              </View>
-            )}
           </View>
-        </ScrollView>
-      )}
-    </CustomSafeAreaView>
+        </View>
+      </ScrollView>
+
+      <LinearGradient
+        colors={[colors.bg, "rgba(14,22,36,0.7)", "transparent"]}
+        style={[styles.topFade, { height: insets.top + 100 }]}
+        pointerEvents="none"
+      />
+      <View style={[styles.topBar, { top: insets.top + space.xs }]}>
+        <IconButton
+          icon="chevron-back"
+          label="Go back"
+          variant="glass"
+          onPress={() => router.back()}
+        />
+        <View style={{ flexDirection: "row", gap: space.sm }}>
+          <IconButton icon="share-outline" label="Share" variant="glass" onPress={share} />
+          <IconButton
+            icon={following ? "bookmark" : "bookmark-outline"}
+            label={following ? "Stop following" : "Follow updates"}
+            variant="glass"
+            onPress={() => {
+              setFollowing(!following);
+              showToast(
+                "success",
+                following ? "Stopped following" : "You'll get updates on this"
+              );
+            }}
+          />
+        </View>
+      </View>
+
+      <BlurView
+        intensity={40}
+        tint="dark"
+        style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, space.lg) }]}
+      >
+        <PressableScale
+          haptic
+          onPress={() => toggleConfirm(incident.id)}
+          accessibilityState={{ selected: mine }}
+          accessibilityLabel={mine ? "Remove your confirmation" : "I saw this too"}
+          style={[styles.primary, mine && styles.primaryDone]}
+        >
+          <Ionicons
+            name={mine ? "checkmark-circle" : "eye"}
+            size={18}
+            color={mine ? colors.accent : colors.onAccent}
+          />
+          <Text
+            style={[
+              type.callout,
+              styles.strong,
+              { color: mine ? colors.accent : colors.onAccent },
+            ]}
+          >
+            {mine ? `You confirmed · ${count}` : `I saw this too · ${count}`}
+          </Text>
+        </PressableScale>
+        <PressableScale
+          onPress={() => showToast("info", "Adding updates isn't part of the concept")}
+          style={styles.secondary}
+          accessibilityLabel="Add update"
+        >
+          <Ionicons name="add" size={18} color={colors.text} />
+          <Text style={[type.callout, styles.strong]}>Update</Text>
+        </PressableScale>
+      </BlurView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 24,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: "Manrope-SemiBold",
-    color: "#FFFFFF",
-  },
-  placeholder: {
-    width: 40,
-  },
-  scrollView: {
+  screen: {
     flex: 1,
+    backgroundColor: colors.bg,
   },
-  content: {
-    paddingHorizontal: 24,
-    paddingBottom: 32,
+  heroBadges: {
+    position: "absolute",
+    left: space.gutter,
+    bottom: space.lg,
+    flexDirection: "row",
+    gap: space.sm,
   },
-  locationSection: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: "Manrope-SemiBold",
-    color: "#FFFFFF",
-    marginBottom: 16,
-  },
-  mapContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-    overflow: "hidden",
-  },
-  mapPlaceholder: {
-    height: 200,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(176, 184, 196, 0.1)",
-  },
-  mapText: {
-    fontSize: 16,
-    fontFamily: "Inter-Medium",
-    color: "#B0B8C4",
-    marginTop: 8,
-  },
-  incidentSection: {
-    marginBottom: 32,
-  },
-  incidentCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-  },
-  categoryPill: {
+  categoryChip: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-start",
-    gap: 6,
-    backgroundColor: "#FFFFFF",
+    gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
-    marginBottom: 12,
+    borderRadius: radius.pill,
+    backgroundColor: colors.glass,
   },
-  categoryText: {
-    fontSize: 12,
+  body: {
+    paddingHorizontal: space.gutter,
+    paddingTop: space.sm,
+    gap: space.xxl,
+  },
+  section: {
+    gap: space.lg,
+  },
+  locationCard: {
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    overflow: "hidden",
+  },
+  locationMap: {
+    height: 150,
+  },
+  locationMeta: {
+    padding: space.lg,
+    gap: 4,
+  },
+  strong: {
+    color: colors.text,
     fontFamily: "Inter-SemiBold",
-    color: "#1A2A44",
   },
-  incidentTitle: {
-    fontSize: 20,
-    fontFamily: "Manrope-SemiBold",
-    color: "#FFFFFF",
-    marginBottom: 12,
+  topFade: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
   },
-  incidentMeta: {
-    gap: 8,
+  topBar: {
+    position: "absolute",
+    left: space.gutter,
+    right: space.gutter,
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
-  metaItem: {
+  actionBar: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: "row",
+    gap: space.md,
+    paddingHorizontal: space.gutter,
+    paddingTop: space.lg,
+    backgroundColor: "rgba(14, 22, 36, 0.7)",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.hairline,
+  },
+  primary: {
+    flex: 1,
+    height: 52,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accent,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    justifyContent: "center",
+    gap: space.sm,
   },
-  metaText: {
-    fontSize: 14,
-    fontFamily: "Inter-Regular",
-    color: "#B0B8C4",
+  primaryDone: {
+    backgroundColor: "rgba(124, 242, 200, 0.14)",
   },
-  descriptionSection: {
-    marginBottom: 32,
-  },
-  descriptionCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-  },
-  descriptionText: {
-    fontSize: 16,
-    fontFamily: "Inter-Regular",
-    color: "#FFFFFF",
-    lineHeight: 24,
-  },
-  mediaSection: {
-    marginBottom: 32,
-  },
-  mediaImage: {
-    width: "100%",
-    height: 200,
-    borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+  secondary: {
+    height: 52,
+    paddingHorizontal: space.xl,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceRaised,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
   },
   missing: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 12,
-    paddingHorizontal: 24,
-  },
-  missingText: {
-    fontSize: 16,
-    fontFamily: "Inter-Medium",
-    color: "#B0B8C4",
+    gap: space.md,
+    backgroundColor: colors.bg,
   },
 });
