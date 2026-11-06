@@ -79,7 +79,7 @@ export default function HomeScreen() {
 
               {item.image && (
                 <Image
-                  source={{ uri: item.image }}
+                  source={item.image}
                   style={styles.feedImage}
                   contentFit="cover"
                   transition={200}

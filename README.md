@@ -2,7 +2,7 @@
 
 A concept UI for a neighbourhood-watch app: a feed of what's happening nearby, a quick way to report an incident, and a profile that lets you stay anonymous.
 
-> **UI only.** There is no backend, account system or network API. Every screen runs on local sample data, and anything you add (a report, a name, a photo) lives in memory until the app reloads. All neighbourhoods, handles and events are invented.
+> **UI only.** There is no backend, account system or network API. Every screen runs on local sample data and bundled photos, and anything you add (a report, a name, a photo) lives in memory until the app reloads. All neighbourhoods, handles and events are invented.
 
 ## Screens
 
@@ -36,7 +36,6 @@ npx expo run:ios
 
 > **Known limit:** on Xcode 27, the iOS 27 Simulator refuses to launch apps that don't use the UIScene life cycle, and React Native 0.79 doesn't. Use an older iOS runtime, or upgrade the Expo SDK (see [docs/modernise.md](docs/modernise.md)).
 
-Feed photos load from Pexels, which is the only thing the app fetches over the network.
 
 ## Checks
 

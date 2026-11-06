@@ -100,7 +100,7 @@ export default function IncidentDetailsScreen() {
               <View style={styles.mediaSection}>
                 <Text style={styles.sectionTitle}>Media</Text>
                 <Image
-                  source={{ uri: incident.image }}
+                  source={incident.image}
                   style={styles.mediaImage}
                   contentFit="cover"
                   transition={200}

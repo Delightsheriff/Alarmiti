@@ -25,7 +25,7 @@ export type Incident = {
   reportedAt: Date;
   reporter: string;
   urgent?: boolean;
-  image?: string;
+  image?: number | { uri: string };
 };
 
 export type Profile = {
@@ -87,8 +87,6 @@ export const sampleIncidents: Incident[] = [
     location: "Lantern Street",
     reportedAt: minutesAgo(35),
     reporter: "Neighbour #2481",
-    image:
-      "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=800",
   },
   {
     id: "inc-2",
@@ -99,32 +97,29 @@ export const sampleIncidents: Incident[] = [
     location: "Palm Grove Estate",
     reportedAt: minutesAgo(140),
     reporter: "Palm Grove Residents Group",
-    image:
-      "https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=800",
+    image: require("../assets/images/feed/meeting-room.jpg"),
   },
   {
     id: "inc-3",
     category: "suspicious",
-    title: "Unfamiliar van circling Riverside Close",
+    title: "Car door checks on Riverside Close",
     description:
-      "A white van without markings has driven past the same houses three times this afternoon. No one has approached it. Keep gates locked and note the plate if you see it.",
+      "Someone was seen trying car door handles along the parked row by the shops this afternoon. Nothing was taken that we know of. Lock up and keep valuables out of sight.",
     location: "Riverside Close",
     reportedAt: minutesAgo(260),
     reporter: "Neighbour #0917",
-    image:
-      "https://images.pexels.com/photos/4553618/pexels-photo-4553618.jpeg?auto=compress&cs=tinysrgb&w=800",
+    image: require("../assets/images/feed/parked-cars.jpg"),
   },
   {
     id: "inc-4",
     category: "lost-pet",
-    title: "Found: ginger cat with a blue collar",
+    title: "Found: two golden puppies",
     description:
-      "A friendly ginger cat has been waiting outside the pharmacy on Cedar Avenue since this morning. It's safe indoors now. Message to describe it and collect.",
+      "Two friendly golden puppies were playing by the pharmacy on Cedar Avenue this morning with no one around. They're safe indoors now. Message to describe them and collect.",
     location: "Cedar Avenue",
     reportedAt: minutesAgo(410),
     reporter: "Neighbour #3302",
-    image:
-      "https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=800",
+    image: require("../assets/images/feed/puppies.jpg"),
   },
   {
     id: "inc-5",

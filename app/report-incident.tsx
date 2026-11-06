@@ -101,7 +101,7 @@ export default function ReportIncidentScreen() {
       title: `${categories[selectedType].label} at ${location.trim()}`,
       description: description.trim(),
       location: location.trim(),
-      image: photoUri ?? undefined,
+      image: photoUri ? { uri: photoUri } : undefined,
     });
     showToast("success", "Report shared with your neighbours");
     router.back();
