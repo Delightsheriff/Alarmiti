@@ -98,9 +98,10 @@ export default function ReportIncidentScreen() {
 
     addIncident({
       category: selectedType,
-      title: `${categories[selectedType].label} at ${location.trim()}`,
       description: description.trim(),
       location: location.trim(),
+      urgent: false,
+      anonymous: true,
       image: photoUri ? { uri: photoUri } : undefined,
     });
     showToast("success", "Report shared with your neighbours");

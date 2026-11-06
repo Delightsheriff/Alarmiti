@@ -1,4 +1,5 @@
 import { SampleStoreProvider } from "@/data/store";
+import { colors } from "@/theme/tokens";
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -44,7 +45,7 @@ export default function RootLayout() {
         <Stack
           screenOptions={{
             headerShown: false,
-            contentStyle: { backgroundColor: "#1A2A44" },
+            contentStyle: { backgroundColor: colors.bg },
           }}
         >
           <Stack.Screen name="(tabs)" />

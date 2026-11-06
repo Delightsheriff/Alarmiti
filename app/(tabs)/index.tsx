@@ -40,12 +40,12 @@ export default function HomeScreen() {
                 })
               }
               accessibilityRole="button"
-              accessibilityLabel={`${item.urgent ? "Urgent: " : ""}${
+              accessibilityLabel={`${(item.severity === "urgent") ? "Urgent: " : ""}${
                 item.title
               }, ${item.location}`}
               accessibilityHint="Opens the incident details"
             >
-              {item.urgent && (
+              {(item.severity === "urgent") && (
                 <View style={styles.urgentBadge}>
                   <Text style={styles.urgentText}>Urgent</Text>
                 </View>
