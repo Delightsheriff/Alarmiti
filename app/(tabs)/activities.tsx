@@ -168,7 +168,7 @@ export default function ActivityScreen() {
         renderItem={renderActivity}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={renderListHeader}
-        ListEmptyComponent={isSearchActive ? renderEmptySearch : null}
+        ListEmptyComponent={isSearchActive ? renderEmptySearch : undefined}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />

@@ -7,9 +7,8 @@
     "icon": "./assets/images/icon.png",
     "scheme": "alarmiti",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.delightsheriff.alarmiti"
     },
     "android": {
@@ -17,7 +16,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#1A2A44"
       },
-      "edgeToEdgeEnabled": true
+      "package": "com.delightsheriff.alarmiti"
     },
     "web": {
       "bundler": "metro",
@@ -46,7 +45,8 @@
       ]
     ],
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true,
+      "reactCompiler": true
     }
   }
 }
