@@ -1,10 +1,10 @@
 import CustomSafeAreaView from "@/components/custom-safe-area-view";
+import { useSampleStore } from "@/data/store";
+import { showToast } from "@/lib/toast";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
-  ActivityIndicator,
   Image,
   ScrollView,
   StyleSheet,
@@ -14,92 +14,45 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SvgUri } from "react-native-svg";
-
-import {
-  useToggleAnonymous,
-  useUpdateAvatar,
-  useUpdateProfileName,
-  useUser,
-} from "@/hooks/useUser";
-import { supabase } from "@/lib/supabase";
-import { showToast } from "@/lib/toast";
-import { useAuth } from "@/providers/auth-provider";
-import { useRouter } from "expo-router";
 
 export default function ProfileScreen() {
-  const { user } = useUser();
-  const { session } = useAuth();
-  const router = useRouter();
-  const toggleAnonymousMutation = useToggleAnonymous();
-  const updateNameMutation = useUpdateProfileName();
-  const updateAvatarMutation = useUpdateAvatar();
+  const { profile, updateProfile } = useSampleStore();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-
-  const [profileData, setProfileData] = useState({
-    firstName: "",
-    lastName: "",
+  const [draft, setDraft] = useState({
+    firstName: profile.firstName,
+    lastName: profile.lastName,
   });
 
-  const [isAnonymous, setIsAnonymous] = useState<boolean>(
-    user?.is_anonymous ?? true
-  );
-  const anonymousId = user?.username || "";
-  const userEmail = session?.user?.email || "";
+  const isAnonymous = profile.isAnonymous;
+  const hasName = Boolean(profile.firstName && profile.lastName);
 
-  useEffect(() => {
-    if (user && !isEditingProfile) {
-      setProfileData({
-        firstName: user.first_name || "",
-        lastName: user.last_name || "",
-      });
-    }
-  }, [user, isEditingProfile]);
+  const startEditing = () => {
+    setDraft({ firstName: profile.firstName, lastName: profile.lastName });
+    setIsEditingProfile(true);
+  };
 
-  useEffect(() => {
-    setIsAnonymous(user?.is_anonymous ?? true);
-  }, [user?.is_anonymous]);
-
-  const handleToggleAnonymity = () => {
-    if (!isAnonymous && (!profileData.firstName || !profileData.lastName)) {
-      showToast(
-        "error",
-        "Please complete your profile before disabling anonymous mode."
-      );
-      return;
-    }
-    const nextValue = !isAnonymous;
-    setIsAnonymous(nextValue); // optimistic update
-    toggleAnonymousMutation.mutate(nextValue, {
-      onError: () => {
-        // revert if server update fails
-        setIsAnonymous(!nextValue);
-        showToast("error", "Failed to update anonymity setting");
-      },
-    });
+  const handleToggleAnonymity = (nextValue: boolean) => {
+    updateProfile({ isAnonymous: nextValue });
     setIsEditingProfile(false);
+
+    // Going public without a name opens the editor rather than blocking the
+    // switch, so anonymity can always be turned back on.
+    if (!nextValue && !hasName) {
+      startEditing();
+      showToast("info", "Add your name so neighbours know who you are.");
+    }
   };
 
   const handleSaveProfile = () => {
-    if (!profileData.firstName.trim() || !profileData.lastName.trim()) {
+    const firstName = draft.firstName.trim();
+    const lastName = draft.lastName.trim();
+    if (!firstName || !lastName) {
       showToast("error", "First name and last name are required.");
       return;
     }
-    updateNameMutation.mutate(
-      {
-        firstName: profileData.firstName.trim(),
-        lastName: profileData.lastName.trim(),
-      },
-      {
-        onSuccess: () => {
-          setIsEditingProfile(false);
-          showToast("success", "Profile updated successfully!");
-        },
-        onError: (e: any) => {
-          showToast("error", e?.message || "Failed to update profile");
-        },
-      }
-    );
+    updateProfile({ firstName, lastName });
+    setIsEditingProfile(false);
+    showToast("success", "Profile updated");
   };
 
   const handleChangePhoto = async () => {
@@ -116,31 +69,8 @@ export default function ProfileScreen() {
       quality: 0.8,
     });
 
-    if (result.canceled || !result.assets || result.assets.length === 0) {
-      return;
-    }
-
-    const asset = result.assets[0];
-    const fileName =
-      asset.fileName || asset.uri.split("/").pop() || `avatar.jpg`;
-    const mimeType = asset.mimeType || "image/jpeg";
-
-    updateAvatarMutation.mutate(
-      { uri: asset.uri, fileName, mimeType },
-      {
-        onError: (e: any) => {
-          showToast("error", e?.message || "Could not upload avatar");
-        },
-      }
-    );
-  };
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      router.replace("/auth");
-    } catch (e: any) {
-      showToast("error", e?.message || "Logout failed. Please try again");
+    if (!result.canceled && result.assets.length > 0) {
+      updateProfile({ avatarUri: result.assets[0].uri });
     }
   };
 
@@ -148,10 +78,14 @@ export default function ProfileScreen() {
     <CustomSafeAreaView>
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={styles.headerTitle} accessibilityRole="header">
+            Profile
+          </Text>
         </View>
 
         {/* Profile Section */}
@@ -159,22 +93,12 @@ export default function ProfileScreen() {
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
               {isAnonymous ? (
-                user?.anon_avatar_url ? (
-                  user.anon_avatar_url.includes("/svg") ? (
-                    <SvgUri uri={user.anon_avatar_url} width={80} height={80} />
-                  ) : (
-                    <Image
-                      source={{ uri: user.anon_avatar_url }}
-                      style={{ width: 80, height: 80, borderRadius: 40 }}
-                    />
-                  )
-                ) : (
-                  <Ionicons name="shield" size={32} color="#1A2A44" />
-                )
-              ) : user?.avatar_url ? (
+                <Ionicons name="shield" size={32} color="#1A2A44" />
+              ) : profile.avatarUri ? (
                 <Image
-                  source={{ uri: user.avatar_url }}
+                  source={{ uri: profile.avatarUri }}
                   style={{ width: 80, height: 80, borderRadius: 40 }}
+                  accessibilityLabel="Your profile photo"
                 />
               ) : (
                 <Ionicons name="person" size={32} color="#1A2A44" />
@@ -187,45 +111,40 @@ export default function ProfileScreen() {
             <TouchableOpacity
               style={styles.changePhotoButton}
               onPress={handleChangePhoto}
-              disabled={updateAvatarMutation.isPending}
+              accessibilityRole="button"
+              accessibilityLabel="Change profile photo"
             >
-              {updateAvatarMutation.isPending ? (
-                <ActivityIndicator size="small" color="#1A2A44" />
-              ) : (
-                <>
-                  <Ionicons name="camera" size={16} color="#1A2A44" />
-                  <Text style={styles.changePhotoText}>Change Photo</Text>
-                </>
-              )}
+              <Ionicons name="camera" size={16} color="#1A2A44" />
+              <Text style={styles.changePhotoText}>Change Photo</Text>
             </TouchableOpacity>
           )}
 
           <Text style={styles.profileName}>
             {isAnonymous
-              ? anonymousId
-              : profileData.firstName && profileData.lastName
-              ? `${profileData.firstName} ${profileData.lastName}`
+              ? profile.username
+              : hasName
+              ? `${profile.firstName} ${profile.lastName}`
               : "Complete Your Profile"}
           </Text>
 
-          {!isAnonymous && <Text style={styles.profileEmail}>{userEmail}</Text>}
+          {!isAnonymous && (
+            <Text style={styles.profileEmail}>{profile.email}</Text>
+          )}
 
           {/* Location Display */}
           <View style={styles.locationContainer}>
             <Ionicons name="location" size={16} color="#B0B8C4" />
-            <Text style={styles.locationText}>
-              {user?.region || "Location not set"}
-            </Text>
+            <Text style={styles.locationText}>{profile.region}</Text>
           </View>
 
           <View style={styles.anonymityToggle}>
             <View style={styles.toggleContent}>
               <View style={styles.toggleIcon}>
-                {isAnonymous ? (
-                  <Ionicons name="eye-off" size={16} color="#1A2A44" />
-                ) : (
-                  <Ionicons name="eye" size={16} color="#1A2A44" />
-                )}
+                <Ionicons
+                  name={isAnonymous ? "eye-off" : "eye"}
+                  size={16}
+                  color="#1A2A44"
+                />
               </View>
               <View style={styles.toggleText}>
                 <Text style={styles.toggleLabel}>Anonymous Mode</Text>
@@ -239,6 +158,7 @@ export default function ProfileScreen() {
             <Switch
               value={isAnonymous}
               onValueChange={handleToggleAnonymity}
+              accessibilityLabel="Anonymous mode"
               trackColor={{
                 false: "rgba(255, 255, 255, 0.2)",
                 true: "#FFFFFF",
@@ -256,7 +176,13 @@ export default function ProfileScreen() {
               <Text style={styles.sectionTitle}>Profile Information</Text>
               <TouchableOpacity
                 style={styles.editButton}
-                onPress={() => setIsEditingProfile(!isEditingProfile)}
+                onPress={() =>
+                  isEditingProfile ? setIsEditingProfile(false) : startEditing()
+                }
+                accessibilityRole="button"
+                accessibilityLabel={
+                  isEditingProfile ? "Cancel editing" : "Edit profile"
+                }
               >
                 <Ionicons name="create" size={16} color="#FFFFFF" />
                 <Text style={styles.editButtonText}>
@@ -272,17 +198,18 @@ export default function ProfileScreen() {
                   {isEditingProfile ? (
                     <TextInput
                       style={styles.textInput}
-                      value={profileData.firstName}
+                      value={draft.firstName}
                       onChangeText={(text) =>
-                        setProfileData({ ...profileData, firstName: text })
+                        setDraft({ ...draft, firstName: text })
                       }
                       placeholder="Enter first name"
                       placeholderTextColor="#B0B8C4"
+                      accessibilityLabel="First name"
                     />
                   ) : (
                     <View style={styles.inputDisplayContainer}>
                       <Text style={styles.inputValue}>
-                        {profileData.firstName || "Not set"}
+                        {profile.firstName || "Not set"}
                       </Text>
                     </View>
                   )}
@@ -292,17 +219,18 @@ export default function ProfileScreen() {
                   {isEditingProfile ? (
                     <TextInput
                       style={styles.textInput}
-                      value={profileData.lastName}
+                      value={draft.lastName}
                       onChangeText={(text) =>
-                        setProfileData({ ...profileData, lastName: text })
+                        setDraft({ ...draft, lastName: text })
                       }
                       placeholder="Enter last name"
                       placeholderTextColor="#B0B8C4"
+                      accessibilityLabel="Last name"
                     />
                   ) : (
                     <View style={styles.inputDisplayContainer}>
                       <Text style={styles.inputValue}>
-                        {profileData.lastName || "Not set"}
+                        {profile.lastName || "Not set"}
                       </Text>
                     </View>
                   )}
@@ -313,26 +241,17 @@ export default function ProfileScreen() {
                 <Text style={styles.inputLabel}>Current Location</Text>
                 <View style={styles.locationInputContainer}>
                   <Ionicons name="location" size={18} color="#B0B8C4" />
-                  <Text style={styles.locationInputText}>
-                    {user?.region || "Location not set"}
-                  </Text>
+                  <Text style={styles.locationInputText}>{profile.region}</Text>
                 </View>
               </View>
 
               {isEditingProfile && (
                 <TouchableOpacity
-                  style={[
-                    styles.saveButton,
-                    updateNameMutation.isPending && { opacity: 0.7 },
-                  ]}
+                  style={styles.saveButton}
                   onPress={handleSaveProfile}
-                  disabled={updateNameMutation.isPending}
+                  accessibilityRole="button"
                 >
-                  {updateNameMutation.isPending ? (
-                    <ActivityIndicator size="small" color="#1A2A44" />
-                  ) : (
-                    <Text style={styles.saveButtonText}>Save Profile</Text>
-                  )}
+                  <Text style={styles.saveButtonText}>Save Profile</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -349,17 +268,11 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </ScrollView>
-      <View style={styles.bottomSection}>
-        <TouchableOpacity style={styles.saveButton} onPress={handleLogout}>
-          <Text style={styles.saveButtonText}>Log Out</Text>
-        </TouchableOpacity>
-      </View>
     </CustomSafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  // ...existing code...
   scrollView: {
     flex: 1,
   },
@@ -589,14 +502,6 @@ const styles = StyleSheet.create({
     fontFamily: "Inter-Regular",
     color: "#FFFFFF",
   },
-  refreshLocationButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
   saveButton: {
     backgroundColor: "#FFFFFF",
     paddingVertical: 14,
@@ -607,53 +512,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Inter-SemiBold",
     color: "#1A2A44",
-  },
-  bottomSection: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255, 255, 255, 0.1)",
-    backgroundColor: "#1A2A44",
-  },
-  settingItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.1)",
-  },
-  lastSettingItem: {
-    borderBottomWidth: 0,
-  },
-  settingLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  settingIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  settingContent: {
-    flex: 1,
-  },
-  settingLabel: {
-    fontSize: 16,
-    fontFamily: "Inter-Medium",
-    color: "#FFFFFF",
-  },
-  settingValue: {
-    fontSize: 14,
-    fontFamily: "Inter-Regular",
-    color: "#B0B8C4",
-    marginTop: 2,
   },
   privacyNotice: {
     flexDirection: "row",

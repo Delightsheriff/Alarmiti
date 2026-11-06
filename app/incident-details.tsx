@@ -1,7 +1,6 @@
 import CustomSafeAreaView from "@/components/custom-safe-area-view";
-import { useAuth } from "@/providers/auth-provider";
 import { Ionicons } from "@expo/vector-icons";
-import { Redirect, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import {
   Image,
   ScrollView,
@@ -13,10 +12,6 @@ import {
 
 export default function IncidentDetailsScreen() {
   const router = useRouter();
-  const { session, mounting } = useAuth();
-
-  if (mounting) return null;
-  if (!session) return <Redirect href="/auth" />;
 
   return (
     <CustomSafeAreaView>

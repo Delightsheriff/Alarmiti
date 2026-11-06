@@ -1,5 +1,4 @@
-import AuthProvider from "@/providers/auth-provider";
-import { QueryProvider } from "@/providers/query-provider";
+import { SampleStoreProvider } from "@/data/store";
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -41,19 +40,20 @@ export default function RootLayout() {
 
   return (
     <>
-      <AuthProvider>
-        <QueryProvider>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="onboarding" />
-            <Stack.Screen name="location" />
-            <Stack.Screen name="auth" />
-            <Stack.Screen name="incident-details" />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <StatusBar style="light" />
-        </QueryProvider>
-      </AuthProvider>
+      <SampleStoreProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: "#1A2A44" },
+          }}
+        >
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="report-incident" />
+          <Stack.Screen name="incident-details" />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style="light" />
+      </SampleStoreProvider>
       <Toast />
     </>
   );
