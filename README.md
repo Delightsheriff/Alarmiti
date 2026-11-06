@@ -34,6 +34,8 @@ npx expo run:ios
 
 `expo run:ios` builds a development client and opens it on the iOS Simulator. `npx expo run:android` does the same for an Android emulator. The current Expo Go app only runs the latest SDK, so use a development build.
 
+> **Known limit:** on Xcode 27, the iOS 27 Simulator refuses to launch apps that don't use the UIScene life cycle, and React Native 0.79 doesn't. Use an older iOS runtime, or upgrade the Expo SDK (see [docs/modernise.md](docs/modernise.md)).
+
 Feed photos load from Pexels, which is the only thing the app fetches over the network.
 
 ## Checks
