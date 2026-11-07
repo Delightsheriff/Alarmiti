@@ -31,8 +31,10 @@ type SampleStore = {
   incidents: Incident[];
   profile: Profile;
   confirmed: Set<string>;
+  followed: Set<string>;
   addIncident: (incident: NewIncident) => Incident;
   toggleConfirm: (id: string) => void;
+  toggleFollow: (id: string) => void;
   updateProfile: (changes: Partial<Profile>) => void;
 };
 
@@ -42,6 +44,7 @@ export function SampleStoreProvider({ children }: PropsWithChildren) {
   const [incidents, setIncidents] = useState(sampleIncidents);
   const [profile, setProfile] = useState(sampleProfile);
   const [confirmed, setConfirmed] = useState<Set<string>>(new Set());
+  const [followed, setFollowed] = useState<Set<string>>(new Set());
 
   const addIncident = useCallback(
     ({ category, location, description, urgent, anonymous, image }: NewIncident) => {
@@ -75,22 +78,16 @@ export function SampleStoreProvider({ children }: PropsWithChildren) {
     [profile]
   );
 
-  const toggleConfirm = useCallback((id: string) => {
-    setConfirmed((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
+  const toggleConfirm = useCallback((id: string) => setConfirmed((current) => toggled(current, id)), []);
+  const toggleFollow = useCallback((id: string) => setFollowed((current) => toggled(current, id)), []);
 
   const updateProfile = useCallback((changes: Partial<Profile>) => {
     setProfile((current) => ({ ...current, ...changes }));
   }, []);
 
   const value = useMemo(
-    () => ({ incidents, profile, confirmed, addIncident, toggleConfirm, updateProfile }),
-    [incidents, profile, confirmed, addIncident, toggleConfirm, updateProfile]
+    () => ({ incidents, profile, confirmed, followed, addIncident, toggleConfirm, toggleFollow, updateProfile }),
+    [incidents, profile, confirmed, followed, addIncident, toggleConfirm, toggleFollow, updateProfile]
   );
 
   return (
@@ -98,6 +95,13 @@ export function SampleStoreProvider({ children }: PropsWithChildren) {
       {children}
     </SampleStoreContext.Provider>
   );
+}
+
+function toggled(set: Set<string>, id: string) {
+  const next = new Set(set);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  return next;
 }
 
 export function useSampleStore() {

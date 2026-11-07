@@ -1,11 +1,19 @@
-import type { Severity } from "@/theme/tokens";
-import { Ionicons } from "@expo/vector-icons";
-import { ComponentProps } from "react";
+import { color } from "@/theme/system";
+import type { ColorValue } from "react-native";
+import type { SFSymbol } from "sf-symbols-typescript";
 
 // Everything in this file is invented for the concept. The neighbourhoods,
 // handles and events do not refer to real places or people.
 
-type IconName = ComponentProps<typeof Ionicons>["name"];
+export type Severity = "info" | "low" | "medium" | "high" | "urgent";
+
+export const severity: Record<Severity, { color: ColorValue; label: string }> = {
+  info: { color: color.gray, label: "Notice" },
+  low: { color: color.green, label: "Low" },
+  medium: { color: color.yellow, label: "Medium" },
+  high: { color: color.orange, label: "High" },
+  urgent: { color: color.red, label: "Urgent" },
+};
 
 export type IncidentCategory =
   | "suspicious"
@@ -54,51 +62,16 @@ export type Profile = {
 
 export const categories: Record<
   IncidentCategory,
-  { label: string; short: string; icon: IconName; severity: Severity }
+  { label: string; short: string; symbol: SFSymbol; tile: ColorValue; severity: Severity }
 > = {
-  suspicious: {
-    label: "Suspicious Activity",
-    short: "Suspicious",
-    icon: "eye",
-    severity: "medium",
-  },
-  theft: { label: "Theft", short: "Theft", icon: "bag-handle", severity: "high" },
-  vandalism: {
-    label: "Vandalism",
-    short: "Vandalism",
-    icon: "hammer",
-    severity: "medium",
-  },
-  noise: {
-    label: "Noise Complaint",
-    short: "Noise",
-    icon: "volume-high",
-    severity: "medium",
-  },
-  safety: {
-    label: "Safety Hazard",
-    short: "Safety",
-    icon: "warning",
-    severity: "high",
-  },
-  "lost-pet": {
-    label: "Lost & Found",
-    short: "Lost & found",
-    icon: "paw",
-    severity: "info",
-  },
-  community: {
-    label: "Community Notice",
-    short: "Community",
-    icon: "people",
-    severity: "info",
-  },
-  other: {
-    label: "Other",
-    short: "Other",
-    icon: "ellipsis-horizontal",
-    severity: "low",
-  },
+  suspicious: { label: "Suspicious Activity", short: "Suspicious", symbol: "eye.fill", tile: color.indigo, severity: "medium" },
+  theft: { label: "Theft", short: "Theft", symbol: "bag.fill", tile: color.orange, severity: "high" },
+  vandalism: { label: "Vandalism", short: "Vandalism", symbol: "hammer.fill", tile: color.brown, severity: "medium" },
+  noise: { label: "Noise Complaint", short: "Noise", symbol: "speaker.wave.3.fill", tile: color.purple, severity: "medium" },
+  safety: { label: "Safety Hazard", short: "Safety", symbol: "exclamationmark.triangle.fill", tile: color.red, severity: "high" },
+  "lost-pet": { label: "Lost & Found", short: "Lost & found", symbol: "pawprint.fill", tile: color.teal, severity: "info" },
+  community: { label: "Community Notice", short: "Community", symbol: "person.2.fill", tile: color.blue, severity: "info" },
+  other: { label: "Other", short: "Other", symbol: "ellipsis", tile: color.gray, severity: "low" },
 };
 
 export const reportableCategories: IncidentCategory[] = [
