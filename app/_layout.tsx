@@ -1,70 +1,32 @@
 import { SampleStoreProvider } from "@/data/store";
-import { colors } from "@/theme/tokens";
-import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-} from "@expo-google-fonts/inter";
-import {
-  Manrope_400Regular,
-  Manrope_600SemiBold,
-  Manrope_700Bold,
-  useFonts,
-} from "@expo-google-fonts/manrope";
-import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
-import Toast from "react-native-toast-message";
+import { color } from "@/theme/system";
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
+import { LogBox, useColorScheme } from "react-native";
 
-SplashScreen.preventAutoHideAsync();
+// Incident previews can't morph into the pushed screen because every tab shares
+// one stack layout, so expo-router warns and falls back to a regular push.
+LogBox.ignoreLogs(["No preloaded screen view to push"]);
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
-    "Manrope-Regular": Manrope_400Regular,
-    "Manrope-SemiBold": Manrope_600SemiBold,
-    "Manrope-Bold": Manrope_700Bold,
-    "Inter-Regular": Inter_400Regular,
-    "Inter-Medium": Inter_500Medium,
-    "Inter-SemiBold": Inter_600SemiBold,
-  });
-
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
-  if (!fontsLoaded) {
-    return null;
-  }
-
+  // Header titles and back buttons take their colours from this theme.
+  const scheme = useColorScheme();
   return (
-    <>
+    <ThemeProvider value={scheme === "dark" ? DarkTheme : DefaultTheme}>
       <SampleStoreProvider>
         <Stack
           screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.bg },
+            contentStyle: { backgroundColor: color.background },
+            headerBackButtonDisplayMode: "minimal",
           }}
         >
-          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen
-            name="report-incident"
-            options={{
-              presentation: "formSheet",
-              sheetAllowedDetents: [0.93],
-              sheetGrabberVisible: true,
-              sheetCornerRadius: 28,
-              contentStyle: { backgroundColor: colors.surface },
-            }}
+            name="report"
+            options={{ presentation: "modal", title: "New Report" }}
           />
-          <Stack.Screen name="incident-details" />
-          <Stack.Screen name="+not-found" />
+          <Stack.Screen name="+not-found" options={{ title: "Not Found" }} />
         </Stack>
-        <StatusBar style="dark" />
       </SampleStoreProvider>
-      <Toast />
-    </>
+    </ThemeProvider>
   );
 }
